@@ -657,8 +657,9 @@ async def list_templates():
         if filename.endswith(".json"):
             with open(os.path.join(TEMPLATE_DIR, filename), "r") as f:
                 data = json.load(f)
-                # Check if built-in
-                data["is_builtin"] = data.get("filename", "") in BUILTIN_TEMPLATE_NAMES
+                # Check if built-in - use JSON value if present, otherwise check filename
+                if "is_builtin" not in data:
+                    data["is_builtin"] = data.get("filename", "") in BUILTIN_TEMPLATE_NAMES
                 templates.append(TemplateInfo(**data))
     
     return templates
