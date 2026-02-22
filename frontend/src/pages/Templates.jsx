@@ -1,7 +1,19 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import axios from 'axios'
 import { useDropzone } from 'react-dropzone'
-import { Upload, File, Trash2, Loader2, FolderOpen, Plus } from 'lucide-react'
+import { 
+  Upload, 
+  File, 
+  Trash2, 
+  Loader2, 
+  FolderOpen, 
+  Plus, 
+  Eye, 
+  X,
+  Check,
+  Star,
+  Layout
+} from 'lucide-react'
 
 const API_URL = 'http://localhost:8000'
 
@@ -13,6 +25,8 @@ function Templates() {
     name: '',
     description: ''
   })
+  const [previewTemplate, setPreviewTemplate] = useState(null)
+  const [previewData, setPreviewData] = useState(null)
 
   useEffect(() => {
     fetchTemplates()
@@ -73,7 +87,12 @@ function Templates() {
     multiple: false
   })
 
-  const deleteTemplate = async (id) => {
+  const deleteTemplate = async (id, isBuiltin) => {
+    if (isBuiltin) {
+      setMessage({ type: 'error', text: 'Built-in templates cannot be deleted' })
+      return
+    }
+    
     if (!window.confirm('Are you sure you want to delete this template?')) return
 
     try {
@@ -81,10 +100,29 @@ function Templates() {
       setMessage({ type: 'success', text: 'Template deleted successfully!' })
       fetchTemplates()
     } catch (error) {
-      setMessage({ type: 'error', text: 'Error deleting template.' })
+      setMessage({ type: 'error', text: error.response?.data?.detail || 'Error deleting template.' })
       console.error(error)
     }
   }
+
+  const openPreview = async (template) => {
+    setPreviewTemplate(template)
+    try {
+      const response = await axios.get(`${API_URL}/api/templates/${template.id}/preview`)
+      setPreviewData(response.data)
+    } catch (error) {
+      console.error('Error loading preview:', error)
+    }
+  }
+
+  const closePreview = () => {
+    setPreviewTemplate(null)
+    setPreviewData(null)
+  }
+
+  // Group templates into built-in and custom
+  const builtinTemplates = templates.filter(t => t.is_builtin)
+  const customTemplates = templates.filter(t => !t.is_builtin)
 
   return (
     <div className="animate-fadeIn">
@@ -92,7 +130,7 @@ function Templates() {
         <span className="gradient-text">Templates</span>
       </h2>
       <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
-        Upload and manage your PowerPoint templates for consistent branding.
+        Choose from our professional templates or upload your own for consistent branding.
       </p>
 
       {message && (
@@ -101,6 +139,7 @@ function Templates() {
         </div>
       )}
 
+      {/* Upload Section */}
       <div className="card" style={{ marginBottom: '1.5rem' }}>
         <h3 style={{ fontFamily: 'Orbitron, sans-serif', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <Plus size={20} />
@@ -161,13 +200,14 @@ function Templates() {
         </div>
       </div>
 
-      <div className="card">
+      {/* Built-in Templates */}
+      <div className="card" style={{ marginBottom: '1.5rem' }}>
         <h3 style={{ fontFamily: 'Orbitron, sans-serif', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <FolderOpen size={20} />
-          Your Templates ({templates.length})
+          <Star size={20} style={{ color: 'var(--primary)' }} />
+          Built-in Templates ({builtinTemplates.length})
         </h3>
         
-        {templates.length === 0 ? (
+        {builtinTemplates.length === 0 ? (
           <div style={{ 
             color: 'var(--text-muted)', 
             textAlign: 'center', 
@@ -176,12 +216,95 @@ function Templates() {
             borderRadius: '12px'
           }}>
             <File size={48} style={{ marginBottom: '1rem', opacity: 0.5 }} />
-            <p>No templates yet. Upload your first template above!</p>
+            <p>No built-in templates available.</p>
           </div>
         ) : (
           <div className="template-grid">
-            {templates.map((template) => (
-              <div key={template.id} className="template-card" style={{ position: 'relative' }}>
+            {builtinTemplates.map((template) => (
+              <div key={template.id} className="template-card builtin">
+                <button 
+                  className="template-preview-btn"
+                  onClick={() => openPreview(template)}
+                  title="Preview Template"
+                >
+                  <Eye size={16} />
+                </button>
+                
+                <div style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '0.75rem', 
+                  marginBottom: '0.75rem'
+                }}>
+                  <div style={{
+                    width: '40px',
+                    height: '40px',
+                    background: 'var(--gradient-primary)',
+                    borderRadius: '10px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}>
+                    <Layout size={20} color="white" />
+                  </div>
+                  <h4 style={{ margin: 0, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {template.name}
+                  </h4>
+                </div>
+                
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '1rem', minHeight: '40px' }}>
+                  {template.description || 'No description'}
+                </p>
+                
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  padding: '0.5rem',
+                  background: 'rgba(212, 165, 116, 0.1)',
+                  borderRadius: '8px',
+                  fontSize: '0.8rem',
+                  color: 'var(--primary)'
+                }}>
+                  <Star size={14} />
+                  <span>Built-in Template</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Custom Templates */}
+      <div className="card">
+        <h3 style={{ fontFamily: 'Orbitron, sans-serif', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <FolderOpen size={20} />
+          Your Templates ({customTemplates.length})
+        </h3>
+        
+        {customTemplates.length === 0 ? (
+          <div style={{ 
+            color: 'var(--text-muted)', 
+            textAlign: 'center', 
+            padding: '3rem',
+            border: '2px dashed var(--border)',
+            borderRadius: '12px'
+          }}>
+            <File size={48} style={{ marginBottom: '1rem', opacity: 0.5 }} />
+            <p>No custom templates yet. Upload your first template above!</p>
+          </div>
+        ) : (
+          <div className="template-grid">
+            {customTemplates.map((template) => (
+              <div key={template.id} className="template-card">
+                <button 
+                  className="template-preview-btn"
+                  onClick={() => openPreview(template)}
+                  title="Preview Template"
+                >
+                  <Eye size={16} />
+                </button>
+                
                 <div style={{ 
                   display: 'flex', 
                   alignItems: 'center', 
@@ -209,7 +332,7 @@ function Templates() {
                 </p>
                 
                 <button
-                  onClick={() => deleteTemplate(template.id)}
+                  onClick={() => deleteTemplate(template.id, template.is_builtin)}
                   className="button button-danger"
                   style={{
                     width: '100%',
@@ -225,6 +348,95 @@ function Templates() {
           </div>
         )}
       </div>
+
+      {/* Template Preview Modal */}
+      {previewTemplate && (
+        <div className="template-preview-modal" onClick={closePreview}>
+          <div className="template-preview-content" onClick={e => e.stopPropagation()}>
+            <div className="template-preview-header">
+              <h3>{previewTemplate.name}</h3>
+              <button onClick={closePreview} className="close-btn">
+                <X size={24} />
+              </button>
+            </div>
+            
+            <div className="template-preview-body">
+              <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
+                {previewTemplate.description}
+              </p>
+              
+              {previewData ? (
+                <div className="template-preview-info">
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(2, 1fr)',
+                    gap: '1rem',
+                    marginBottom: '1.5rem'
+                  }}>
+                    <div style={{
+                      background: 'var(--bg-input)',
+                      padding: '1rem',
+                      borderRadius: '10px',
+                      textAlign: 'center'
+                    }}>
+                      <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--primary)' }}>
+                        {previewData.slide_count || '10+'}
+                      </div>
+                      <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Slides</div>
+                    </div>
+                    <div style={{
+                      background: 'var(--bg-input)',
+                      padding: '1rem',
+                      borderRadius: '10px',
+                      textAlign: 'center'
+                    }}>
+                      <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--primary)' }}>
+                        {previewTemplate.is_builtin ? 'Built-in' : 'Custom'}
+                      </div>
+                      <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Type</div>
+                    </div>
+                  </div>
+                  
+                  <h4 style={{ marginBottom: '1rem', fontFamily: 'Poppins, sans-serif' }}>
+                    Sample Slide Layouts
+                  </h4>
+                  
+                  <div className="template-preview-slides">
+                    <div className="template-preview-slide">
+                      <h4>Title Slide</h4>
+                      <p>Main presentation title and subtitle</p>
+                    </div>
+                    <div className="template-preview-slide">
+                      <h4>Content Slide</h4>
+                      <p>Title with bullet points and content area</p>
+                    </div>
+                    <div className="template-preview-slide">
+                      <h4>Section Header</h4>
+                      <p>Divider slide for new sections</p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div style={{ textAlign: 'center', padding: '2rem' }}>
+                  <Loader2 size={32} style={{ animation: 'spin 1s linear infinite', color: 'var(--primary)' }} />
+                  <p style={{ color: 'var(--text-muted)', marginTop: '1rem' }}>Loading preview...</p>
+                </div>
+              )}
+            </div>
+            
+            <div className="template-preview-footer">
+              <button className="button button-secondary" onClick={closePreview}>
+                <X size={16} style={{ marginRight: '0.5rem' }} />
+                Close
+              </button>
+              <button className="button" onClick={closePreview}>
+                <Check size={16} style={{ marginRight: '0.5rem' }} />
+                Use This Template
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

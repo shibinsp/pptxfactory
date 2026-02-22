@@ -9,7 +9,10 @@ import {
   Edit3,
   ChevronRight,
   Zap,
-  Layers
+  Layers,
+  Eye,
+  Image as ImageIcon,
+  Check
 } from 'lucide-react'
 import SlideEditor from '../components/SlideEditor'
 
@@ -20,10 +23,12 @@ function AIGenerate() {
   const [numSlides, setNumSlides] = useState(5)
   const [templates, setTemplates] = useState([])
   const [selectedTemplate, setSelectedTemplate] = useState(null)
+  const [includeImages, setIncludeImages] = useState(true)
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState(null)
   const [generatedPPT, setGeneratedPPT] = useState(null)
   const [showEditor, setShowEditor] = useState(false)
+  const [showPreview, setShowPreview] = useState(false)
 
   useEffect(() => {
     fetchTemplates()
@@ -48,13 +53,15 @@ function AIGenerate() {
     setMessage(null)
     setGeneratedPPT(null)
     setShowEditor(false)
+    setShowPreview(false)
 
     try {
       const response = await axios.post(`${API_URL}/api/ppt/generate-ai`, {
         prompt,
         num_slides: numSlides,
         template_id: selectedTemplate,
-        theme: 'default'
+        theme: 'default',
+        include_images: includeImages
       })
 
       if (response.data.success) {
@@ -95,6 +102,57 @@ function AIGenerate() {
       slides: updatedPPT.slides
     }))
     setMessage({ type: 'success', text: 'Presentation updated successfully!' })
+  }
+
+  // Preview Modal
+  if (showPreview && generatedPPT) {
+    return (
+      <div className="preview-modal-overlay" onClick={() => setShowPreview(false)}>
+        <div className="preview-modal-content" onClick={e => e.stopPropagation()}>
+          <div className="preview-modal-header">
+            <div>
+              <h3>{generatedPPT.title}</h3>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginTop: '0.25rem' }}>
+                {generatedPPT.slides_count} slides • Preview Mode
+              </p>
+            </div>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button 
+                className="button button-secondary"
+                onClick={() => setShowPreview(false)}
+              >
+                <Edit3 size={16} style={{ marginRight: '0.375rem' }} />
+                Edit
+              </button>
+              <button 
+                className="button button-success"
+                onClick={downloadPPT}
+              >
+                <Download size={16} style={{ marginRight: '0.375rem' }} />
+                Download
+              </button>
+              <button onClick={() => setShowPreview(false)} className="close-btn">
+                <X size={24} />
+              </button>
+            </div>
+          </div>
+          <div className="preview-modal-slides">
+            {generatedPPT.slides?.map((slide, index) => (
+              <div key={slide.id} className="preview-slide-card">
+                <div className="preview-slide-number">{index + 1}</div>
+                <div className="preview-slide-card-inner">
+                  <h4>{slide.title}</h4>
+                  <p>{slide.content}</p>
+                  {slide.image_url && (
+                    <img src={slide.image_url} alt={slide.title} className="preview-slide-image" />
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    )
   }
 
   if (showEditor && generatedPPT) {
@@ -189,11 +247,54 @@ function AIGenerate() {
                 <option value="">Default Template</option>
                 {templates.map((template) => (
                   <option key={template.id} value={template.id}>
-                    {template.name}
+                    {template.name} {template.is_builtin ? '★' : ''}
                   </option>
                 ))}
               </select>
             </div>
+          </div>
+
+          {/* Include Images Toggle */}
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center',
+            gap: '0.75rem',
+            marginBottom: '1.25rem',
+            padding: '0.875rem',
+            background: 'var(--bg-input)',
+            borderRadius: '10px',
+            border: '1px solid var(--border)'
+          }}>
+            <button
+              onClick={() => setIncludeImages(!includeImages)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                background: includeImages ? 'rgba(212, 165, 116, 0.2)' : 'transparent',
+                border: `1px solid ${includeImages ? 'var(--primary)' : 'var(--border)'}`,
+                borderRadius: '8px',
+                padding: '0.6rem 1rem',
+                color: includeImages ? 'var(--primary)' : 'var(--text-muted)',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                fontSize: '0.9rem'
+              }}
+            >
+              <ImageIcon size={18} />
+              {includeImages ? (
+                <>
+                  <Check size={14} />
+                  Images Enabled
+                </>
+              ) : (
+                'Include Images'
+              )}
+            </button>
+            <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+              AI will search and add relevant images to slides
+            </span>
           </div>
 
           <button
@@ -226,9 +327,17 @@ function AIGenerate() {
               </h3>
               <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
                 {generatedPPT.slides_count} slides • {generatedPPT.ai_generated ? 'AI Generated' : 'Smart Template'}
+                {includeImages && ' • With Images'}
               </p>
             </div>
             <div style={{ display: 'flex', gap: '0.625rem' }}>
+              <button 
+                className="button button-secondary"
+                onClick={() => setShowPreview(true)}
+              >
+                <Eye size={16} style={{ marginRight: '0.375rem' }} />
+                Preview
+              </button>
               <button 
                 className="button button-secondary"
                 onClick={openEditor}
@@ -265,6 +374,20 @@ function AIGenerate() {
                 <div className="slide-thumbnail-content">
                   {slide.content?.substring(0, 70)}...
                 </div>
+                {slide.image_url && (
+                  <div style={{ marginTop: '0.5rem' }}>
+                    <img 
+                      src={slide.image_url} 
+                      alt="" 
+                      style={{ 
+                        width: '100%', 
+                        height: '60px', 
+                        objectFit: 'cover',
+                        borderRadius: '6px'
+                      }} 
+                    />
+                  </div>
+                )}
               </div>
             ))}
           </div>

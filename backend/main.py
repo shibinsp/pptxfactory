@@ -14,6 +14,8 @@ from pptx.enum.shapes import MSO_SHAPE
 import json
 import re
 from mistralai import Mistral
+import requests
+from datetime import datetime
 
 app = FastAPI(title="PPT SaaS API", version="2.0.0")
 
@@ -30,13 +32,31 @@ app.add_middleware(
 UPLOAD_DIR = "uploads"
 TEMPLATE_DIR = "templates"
 OUTPUT_DIR = "outputs"
+HISTORY_DIR = "history"
+IMAGES_DIR = "images"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 os.makedirs(TEMPLATE_DIR, exist_ok=True)
 os.makedirs(OUTPUT_DIR, exist_ok=True)
+os.makedirs(HISTORY_DIR, exist_ok=True)
+os.makedirs(IMAGES_DIR, exist_ok=True)
 
 # Configure Mistral API
 MISTRAL_API_KEY = "sztcTEpBuK6tjxaWkkvXjp7sUQgofXAd"
 mistral_client = Mistral(api_key=MISTRAL_API_KEY)
+
+# Built-in template IDs (these cannot be deleted)
+BUILTIN_TEMPLATE_NAMES = [
+    "business_professional.pptx",
+    "modern_dark.pptx", 
+    "minimalist.pptx",
+    "nature_green.pptx",
+    "creative_purple.pptx",
+    "sunset_orange.pptx",
+    "ocean_blue.pptx",
+    "executive_gold.pptx",
+    "startup_modern.pptx",
+    "healthcare_medical.pptx"
+]
 
 # Models
 class SlideContent(BaseModel):
@@ -45,12 +65,14 @@ class SlideContent(BaseModel):
     content: str
     layout: Optional[str] = "title_and_content"
     order: Optional[int] = 0
+    image_url: Optional[str] = None
 
 class SlideUpdate(BaseModel):
     id: str
     title: Optional[str] = None
     content: Optional[str] = None
     order: Optional[int] = None
+    image_url: Optional[str] = None
 
 class PPTRequest(BaseModel):
     title: str
@@ -67,12 +89,23 @@ class AIGenerateRequest(BaseModel):
     num_slides: Optional[int] = 5
     template_id: Optional[str] = None
     theme: Optional[str] = "default"
+    include_images: Optional[bool] = True
 
 class TemplateInfo(BaseModel):
     id: str
     name: str
     description: Optional[str] = ""
     thumbnail: Optional[str] = None
+    is_builtin: Optional[bool] = False
+    colors: Optional[dict] = None
+
+class HistoryEntry(BaseModel):
+    id: str
+    ppt_id: str
+    title: str
+    action: str
+    timestamp: str
+    slides_count: int
 
 # Helper functions
 def generate_ppt_from_template(request: PPTRequest, template_path: str = None, output_id: str = None):
@@ -106,6 +139,16 @@ def generate_ppt_from_template(request: PPTRequest, template_path: str = None, o
             body_shape = slide.placeholders[1]
             tf = body_shape.text_frame
             tf.text = slide_data.content
+        
+        # Add image if provided
+        if slide_data.image_url and os.path.exists(slide_data.image_url):
+            try:
+                left = Inches(8.5)
+                top = Inches(1.5)
+                height = Inches(4)
+                slide.shapes.add_picture(slide_data.image_url, left, top, height=height)
+            except Exception as e:
+                print(f"Error adding image: {e}")
     
     # Save
     if not output_id:
@@ -117,9 +160,10 @@ def generate_ppt_from_template(request: PPTRequest, template_path: str = None, o
     metadata = {
         "id": output_id,
         "title": request.title,
-        "slides": [{"id": s.id or str(uuid.uuid4()), "title": s.title, "content": s.content, "order": s.order or i} for i, s in enumerate(sorted_slides)],
+        "slides": [{"id": s.id or str(uuid.uuid4()), "title": s.title, "content": s.content, "order": s.order or i, "image_url": s.image_url} for i, s in enumerate(sorted_slides)],
         "template_id": request.template_id,
-        "theme": request.theme
+        "theme": request.theme,
+        "created_at": datetime.now().isoformat()
     }
     with open(os.path.join(OUTPUT_DIR, f"{output_id}.json"), "w") as f:
         json.dump(metadata, f)
@@ -136,6 +180,91 @@ def extract_json_from_text(text: str):
     if match:
         return match.group(0)
     return text
+
+def search_unsplash_image(query: str):
+    """Search for images on Unsplash"""
+    try:
+        # Using Unsplash Source API (free, no key required for basic usage)
+        # For production, use Unsplash API with proper key
+        encoded_query = requests.utils.quote(query)
+        # Return a direct image URL from a free image service
+        return f"https://source.unsplash.com/800x600/?{encoded_query}"
+    except Exception as e:
+        print(f"Error searching image: {e}")
+        return None
+
+def download_image(url: str, slide_id: str):
+    """Download image from URL"""
+    try:
+        response = requests.get(url, timeout=10)
+        if response.status_code == 200:
+            image_path = os.path.join(IMAGES_DIR, f"{slide_id}.jpg")
+            with open(image_path, "wb") as f:
+                f.write(response.content)
+            return image_path
+    except Exception as e:
+        print(f"Error downloading image: {e}")
+    return None
+
+def generate_slide_images(slides: List[SlideContent], topic: str):
+    """Generate images for slides based on content"""
+    for slide in slides:
+        # Create search query from slide title and content
+        search_query = f"{topic} {slide.title}"
+        # Limit query length
+        search_query = " ".join(search_query.split()[:5])
+        
+        image_url = search_unsplash_image(search_query)
+        if image_url:
+            # Store the URL for now, download when generating PPT
+            slide.image_url = image_url
+    return slides
+
+def add_to_history(ppt_id: str, title: str, action: str, slides_count: int):
+    """Add entry to user history"""
+    history_entry = {
+        "id": str(uuid.uuid4()),
+        "ppt_id": ppt_id,
+        "title": title,
+        "action": action,
+        "timestamp": datetime.now().isoformat(),
+        "slides_count": slides_count
+    }
+    
+    history_file = os.path.join(HISTORY_DIR, "history.json")
+    history = []
+    
+    if os.path.exists(history_file):
+        with open(history_file, "r") as f:
+            history = json.load(f)
+    
+    history.insert(0, history_entry)  # Add to beginning
+    
+    # Keep only last 100 entries
+    history = history[:100]
+    
+    with open(history_file, "w") as f:
+        json.dump(history, f, indent=2)
+    
+    return history_entry
+
+def get_history():
+    """Get user history"""
+    history_file = os.path.join(HISTORY_DIR, "history.json")
+    if os.path.exists(history_file):
+        with open(history_file, "r") as f:
+            return json.load(f)
+    return []
+
+def is_builtin_template(template_id: str):
+    """Check if template is built-in"""
+    metadata_path = os.path.join(TEMPLATE_DIR, f"{template_id}.json")
+    if os.path.exists(metadata_path):
+        with open(metadata_path, "r") as f:
+            data = json.load(f)
+            filename = data.get("filename", "")
+            return filename in BUILTIN_TEMPLATE_NAMES
+    return False
 
 def generate_ppt_content_with_ai(prompt: str, num_slides: int = 5):
     """Use Mistral AI to generate PPT content"""
@@ -273,6 +402,9 @@ async def generate_ppt(request: PPTRequest):
         
         output_path, output_id = generate_ppt_from_template(request, template_path)
         
+        # Add to history
+        add_to_history(output_id, request.title, "created", len(request.slides))
+        
         return {
             "success": True,
             "ppt_id": output_id,
@@ -293,12 +425,19 @@ async def generate_ppt_with_ai(request: AIGenerateRequest):
             ppt_request = generate_mock_ai_content(request.prompt, request.num_slides)
             ai_used = False
         
+        # Generate images if requested
+        if request.include_images:
+            ppt_request.slides = generate_slide_images(ppt_request.slides, ppt_request.title)
+        
         template_path = None
         if request.template_id:
             template_path = os.path.join(TEMPLATE_DIR, f"{request.template_id}.pptx")
         ppt_request.template_id = request.template_id
         
         output_path, output_id = generate_ppt_from_template(ppt_request, template_path)
+        
+        # Add to history
+        add_to_history(output_id, ppt_request.title, "ai_generated", len(ppt_request.slides))
         
         # Load metadata for response
         metadata_path = os.path.join(OUTPUT_DIR, f"{output_id}.json")
@@ -330,6 +469,33 @@ async def get_ppt(ppt_id: str):
     
     return metadata
 
+@app.get("/api/ppt/{ppt_id}/preview")
+async def get_ppt_preview(ppt_id: str):
+    """Get PPT preview data with slide thumbnails"""
+    metadata_path = os.path.join(OUTPUT_DIR, f"{ppt_id}.json")
+    if not os.path.exists(metadata_path):
+        raise HTTPException(status_code=404, detail="PPT not found")
+    
+    with open(metadata_path, "r") as f:
+        metadata = json.load(f)
+    
+    # Get template info if available
+    template_info = None
+    if metadata.get("template_id"):
+        template_path = os.path.join(TEMPLATE_DIR, f"{metadata['template_id']}.json")
+        if os.path.exists(template_path):
+            with open(template_path, "r") as f:
+                template_info = json.load(f)
+    
+    return {
+        "id": metadata["id"],
+        "title": metadata["title"],
+        "slides": metadata["slides"],
+        "template": template_info,
+        "theme": metadata.get("theme", "default"),
+        "created_at": metadata.get("created_at", "")
+    }
+
 @app.put("/api/ppt/{ppt_id}")
 async def update_ppt(ppt_id: str, request: PPTUpdateRequest):
     """Update PPT slides"""
@@ -356,6 +522,8 @@ async def update_ppt(ppt_id: str, request: PPTUpdateRequest):
                         slides_dict[update.id]["content"] = update.content
                     if update.order is not None:
                         slides_dict[update.id]["order"] = update.order
+                    if update.image_url is not None:
+                        slides_dict[update.id]["image_url"] = update.image_url
             
             # Convert back to list and sort by order
             metadata["slides"] = sorted(slides_dict.values(), key=lambda x: x.get("order", 0))
@@ -378,6 +546,9 @@ async def update_ppt(ppt_id: str, request: PPTUpdateRequest):
         
         output_path, _ = generate_ppt_from_template(ppt_request, template_path, ppt_id)
         
+        # Add to history
+        add_to_history(ppt_id, metadata["title"], "edited", len(metadata["slides"]))
+        
         return {
             "success": True,
             "ppt_id": ppt_id,
@@ -396,10 +567,20 @@ async def delete_ppt(ppt_id: str):
         ppt_path = os.path.join(OUTPUT_DIR, f"{ppt_id}.pptx")
         metadata_path = os.path.join(OUTPUT_DIR, f"{ppt_id}.json")
         
+        # Get title before deleting
+        title = "Unknown"
+        if os.path.exists(metadata_path):
+            with open(metadata_path, "r") as f:
+                data = json.load(f)
+                title = data.get("title", "Unknown")
+        
         if os.path.exists(ppt_path):
             os.remove(ppt_path)
         if os.path.exists(metadata_path):
             os.remove(metadata_path)
+        
+        # Add to history
+        add_to_history(ppt_id, title, "deleted", 0)
         
         return {"success": True, "message": "PPT deleted"}
     except Exception as e:
@@ -452,7 +633,8 @@ async def upload_template(
             "id": template_id,
             "name": name or file.filename,
             "description": description,
-            "filename": file.filename
+            "filename": file.filename,
+            "is_builtin": False
         }
         
         with open(os.path.join(TEMPLATE_DIR, f"{template_id}.json"), "w") as f:
@@ -475,6 +657,8 @@ async def list_templates():
         if filename.endswith(".json"):
             with open(os.path.join(TEMPLATE_DIR, filename), "r") as f:
                 data = json.load(f)
+                # Check if built-in
+                data["is_builtin"] = data.get("filename", "") in BUILTIN_TEMPLATE_NAMES
                 templates.append(TemplateInfo(**data))
     
     return templates
@@ -488,12 +672,52 @@ async def get_template(template_id: str):
         raise HTTPException(status_code=404, detail="Template not found")
     
     with open(metadata_path, "r") as f:
-        return json.load(f)
+        data = json.load(f)
+        data["is_builtin"] = data.get("filename", "") in BUILTIN_TEMPLATE_NAMES
+        return data
+
+@app.get("/api/templates/{template_id}/preview")
+async def get_template_preview(template_id: str):
+    """Get template preview with slide layouts"""
+    metadata_path = os.path.join(TEMPLATE_DIR, f"{template_id}.json")
+    ppt_path = os.path.join(TEMPLATE_DIR, f"{template_id}.pptx")
+    
+    if not os.path.exists(metadata_path):
+        raise HTTPException(status_code=404, detail="Template not found")
+    
+    with open(metadata_path, "r") as f:
+        data = json.load(f)
+    
+    # Get slide count from PPT file
+    slide_count = 0
+    colors = {}
+    if os.path.exists(ppt_path):
+        try:
+            prs = Presentation(ppt_path)
+            slide_count = len(prs.slides)
+            # Extract theme colors from first slide if available
+            if prs.slides:
+                slide = prs.slides[0]
+                if slide.background.fill.type == 1:  # SOLID fill
+                    rgb = slide.background.fill.fore_color.rgb
+                    colors["background"] = f"#{rgb}"
+        except Exception as e:
+            print(f"Error reading template: {e}")
+    
+    data["slide_count"] = slide_count
+    data["colors"] = colors
+    data["is_builtin"] = data.get("filename", "") in BUILTIN_TEMPLATE_NAMES
+    
+    return data
 
 @app.delete("/api/templates/{template_id}")
 async def delete_template(template_id: str):
     """Delete a template"""
     try:
+        # Check if built-in template
+        if is_builtin_template(template_id):
+            raise HTTPException(status_code=403, detail="Cannot delete built-in templates")
+        
         ppt_path = os.path.join(TEMPLATE_DIR, f"{template_id}.pptx")
         if os.path.exists(ppt_path):
             os.remove(ppt_path)
@@ -503,6 +727,49 @@ async def delete_template(template_id: str):
             os.remove(json_path)
         
         return {"success": True, "message": "Template deleted"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/history")
+async def get_user_history():
+    """Get user activity history"""
+    return get_history()
+
+@app.delete("/api/history/{history_id}")
+async def delete_history_entry(history_id: str):
+    """Delete a history entry"""
+    try:
+        history_file = os.path.join(HISTORY_DIR, "history.json")
+        if os.path.exists(history_file):
+            with open(history_file, "r") as f:
+                history = json.load(f)
+            
+            history = [h for h in history if h["id"] != history_id]
+            
+            with open(history_file, "w") as f:
+                json.dump(history, f, indent=2)
+        
+        return {"success": True, "message": "History entry deleted"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/images/search")
+async def search_images(query: str, count: int = 5):
+    """Search for images using Unsplash"""
+    try:
+        # Return Unsplash source URLs
+        encoded_query = requests.utils.quote(query)
+        images = []
+        for i in range(count):
+            images.append({
+                "id": f"{query}_{i}",
+                "url": f"https://source.unsplash.com/800x600/?{encoded_query}&sig={i}",
+                "thumbnail": f"https://source.unsplash.com/400x300/?{encoded_query}&sig={i}",
+                "source": "unsplash"
+            })
+        return {"images": images}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

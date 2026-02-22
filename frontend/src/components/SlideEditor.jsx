@@ -12,7 +12,15 @@ import {
   Type,
   Layout,
   Image as ImageIcon,
-  Palette
+  Palette,
+  Search,
+  Eye,
+  Monitor,
+  Smartphone,
+  Undo,
+  Redo,
+  Copy,
+  Sparkles
 } from 'lucide-react'
 
 const API_URL = 'http://localhost:8000'
@@ -24,10 +32,26 @@ function SlideEditor({ pptId, onClose, onSave }) {
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState(null)
   const [draggedSlide, setDraggedSlide] = useState(null)
+  const [showImageSearch, setShowImageSearch] = useState(false)
+  const [imageSearchQuery, setImageSearchQuery] = useState('')
+  const [searchResults, setSearchResults] = useState([])
+  const [searching, setSearching] = useState(false)
+  const [previewMode, setPreviewMode] = useState(false)
+  const [history, setHistory] = useState([])
+  const [historyIndex, setHistoryIndex] = useState(-1)
+  const [showPreviewModal, setShowPreviewModal] = useState(false)
 
   useEffect(() => {
     fetchPPT()
   }, [pptId])
+
+  // Save state to history for undo/redo
+  const saveToHistory = (newPpt) => {
+    const newHistory = history.slice(0, historyIndex + 1)
+    newHistory.push(JSON.parse(JSON.stringify(newPpt)))
+    setHistory(newHistory)
+    setHistoryIndex(newHistory.length - 1)
+  }
 
   const fetchPPT = async () => {
     try {
@@ -36,6 +60,9 @@ function SlideEditor({ pptId, onClose, onSave }) {
       if (response.data.slides.length > 0) {
         setSelectedSlideId(response.data.slides[0].id)
       }
+      // Initialize history
+      setHistory([JSON.parse(JSON.stringify(response.data))])
+      setHistoryIndex(0)
       setLoading(false)
     } catch (error) {
       setMessage({ type: 'error', text: 'Failed to load presentation' })
@@ -45,13 +72,49 @@ function SlideEditor({ pptId, onClose, onSave }) {
 
   const selectedSlide = ppt?.slides.find(s => s.id === selectedSlideId)
 
+  const undo = () => {
+    if (historyIndex > 0) {
+      setHistoryIndex(historyIndex - 1)
+      setPpt(JSON.parse(JSON.stringify(history[historyIndex - 1])))
+    }
+  }
+
+  const redo = () => {
+    if (historyIndex < history.length - 1) {
+      setHistoryIndex(historyIndex + 1)
+      setPpt(JSON.parse(JSON.stringify(history[historyIndex + 1])))
+    }
+  }
+
+  const duplicateSlide = (slideId) => {
+    const slideToDuplicate = ppt.slides.find(s => s.id === slideId)
+    if (slideToDuplicate) {
+      const newSlide = {
+        ...slideToDuplicate,
+        id: `temp-${Date.now()}`,
+        order: slideToDuplicate.order + 1
+      }
+      const newSlides = [...ppt.slides]
+      const index = newSlides.findIndex(s => s.id === slideId)
+      newSlides.splice(index + 1, 0, newSlide)
+      // Reorder
+      newSlides.forEach((s, i) => s.order = i)
+      const newPpt = { ...ppt, slides: newSlides }
+      setPpt(newPpt)
+      saveToHistory(newPpt)
+      setSelectedSlideId(newSlide.id)
+    }
+  }
+
   const updateSlide = (slideId, updates) => {
-    setPpt(prev => ({
-      ...prev,
-      slides: prev.slides.map(s => 
+    const newPpt = {
+      ...ppt,
+      slides: ppt.slides.map(s => 
         s.id === slideId ? { ...s, ...updates } : s
       )
-    }))
+    }
+    setPpt(newPpt)
+    saveToHistory(newPpt)
   }
 
   const addSlide = () => {
@@ -61,10 +124,12 @@ function SlideEditor({ pptId, onClose, onSave }) {
       content: '• Add your content here',
       order: ppt.slides.length
     }
-    setPpt(prev => ({
-      ...prev,
-      slides: [...prev.slides, newSlide]
-    }))
+    const newPpt = {
+      ...ppt,
+      slides: [...ppt.slides, newSlide]
+    }
+    setPpt(newPpt)
+    saveToHistory(newPpt)
     setSelectedSlideId(newSlide.id)
   }
 
@@ -75,10 +140,11 @@ function SlideEditor({ pptId, onClose, onSave }) {
     }
     
     const newSlides = ppt.slides.filter(s => s.id !== slideId)
-    // Reorder remaining slides
     newSlides.forEach((s, i) => s.order = i)
     
-    setPpt(prev => ({ ...prev, slides: newSlides }))
+    const newPpt = { ...ppt, slides: newSlides }
+    setPpt(newPpt)
+    saveToHistory(newPpt)
     
     if (selectedSlideId === slideId) {
       setSelectedSlideId(newSlides[0]?.id)
@@ -97,15 +163,15 @@ function SlideEditor({ pptId, onClose, onSave }) {
     const newSlides = [...ppt.slides]
     const targetIndex = direction === 'up' ? index - 1 : index + 1
     
-    // Swap orders
     const tempOrder = newSlides[index].order
     newSlides[index].order = newSlides[targetIndex].order
     newSlides[targetIndex].order = tempOrder
     
-    // Sort by order
     newSlides.sort((a, b) => a.order - b.order)
     
-    setPpt(prev => ({ ...prev, slides: newSlides }))
+    const newPpt = { ...ppt, slides: newSlides }
+    setPpt(newPpt)
+    saveToHistory(newPpt)
   }
 
   const handleDragStart = (slide) => {
@@ -120,17 +186,42 @@ function SlideEditor({ pptId, onClose, onSave }) {
     const draggedIndex = newSlides.findIndex(s => s.id === draggedSlide.id)
     const targetIndex = newSlides.findIndex(s => s.id === targetSlide.id)
 
-    // Swap orders
     const tempOrder = newSlides[draggedIndex].order
     newSlides[draggedIndex].order = newSlides[targetIndex].order
     newSlides[targetIndex].order = tempOrder
 
     newSlides.sort((a, b) => a.order - b.order)
-    setPpt(prev => ({ ...prev, slides: newSlides }))
+    setPpt({ ...ppt, slides: newSlides })
   }
 
   const handleDrop = () => {
     setDraggedSlide(null)
+    saveToHistory(ppt)
+  }
+
+  const searchImages = async () => {
+    if (!imageSearchQuery.trim()) return
+    setSearching(true)
+    try {
+      const response = await axios.get(`${API_URL}/api/images/search?query=${encodeURIComponent(imageSearchQuery)}&count=8`)
+      setSearchResults(response.data.images)
+    } catch (error) {
+      console.error('Error searching images:', error)
+    }
+    setSearching(false)
+  }
+
+  const addImageToSlide = (imageUrl) => {
+    if (selectedSlide) {
+      updateSlide(selectedSlide.id, { image_url: imageUrl })
+      setShowImageSearch(false)
+    }
+  }
+
+  const removeImageFromSlide = () => {
+    if (selectedSlide) {
+      updateSlide(selectedSlide.id, { image_url: null })
+    }
   }
 
   const savePPT = async () => {
@@ -144,7 +235,8 @@ function SlideEditor({ pptId, onClose, onSave }) {
           id: s.id,
           title: s.title,
           content: s.content,
-          order: s.order
+          order: s.order,
+          image_url: s.image_url
         }))
       })
 
@@ -161,6 +253,22 @@ function SlideEditor({ pptId, onClose, onSave }) {
     window.open(`${API_URL}/api/ppt/download/${pptId}`, '_blank')
   }
 
+  const generateAIImage = async () => {
+    if (!selectedSlide) return
+    setSearching(true)
+    // Use slide title as search query
+    const query = selectedSlide.title
+    try {
+      const response = await axios.get(`${API_URL}/api/images/search?query=${encodeURIComponent(query)}&count=4`)
+      setSearchResults(response.data.images)
+      setImageSearchQuery(query)
+      setShowImageSearch(true)
+    } catch (error) {
+      console.error('Error generating AI images:', error)
+    }
+    setSearching(false)
+  }
+
   if (loading) {
     return (
       <div className="loading">
@@ -169,18 +277,92 @@ function SlideEditor({ pptId, onClose, onSave }) {
     )
   }
 
+  // Preview Modal
+  if (showPreviewModal) {
+    return (
+      <div className="preview-modal-overlay" onClick={() => setShowPreviewModal(false)}>
+        <div className="preview-modal-content" onClick={e => e.stopPropagation()}>
+          <div className="preview-modal-header">
+            <h3>Presentation Preview</h3>
+            <button onClick={() => setShowPreviewModal(false)} className="close-btn">
+              <X size={24} />
+            </button>
+          </div>
+          <div className="preview-modal-slides">
+            {ppt.slides.map((slide, index) => (
+              <div key={slide.id} className="preview-slide-card">
+                <div className="preview-slide-number">{index + 1}</div>
+                <div className="preview-slide-card-inner">
+                  <h4>{slide.title}</h4>
+                  <p>{slide.content}</p>
+                  {slide.image_url && (
+                    <img src={slide.image_url} alt={slide.title} className="preview-slide-image" />
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="editor-container animate-fadeIn">
+      {/* Toolbar */}
+      <div className="editor-toolbar">
+        <div className="toolbar-left">
+          <button 
+            className="toolbar-btn" 
+            onClick={undo}
+            disabled={historyIndex <= 0}
+            title="Undo"
+          >
+            <Undo size={18} />
+          </button>
+          <button 
+            className="toolbar-btn" 
+            onClick={redo}
+            disabled={historyIndex >= history.length - 1}
+            title="Redo"
+          >
+            <Redo size={18} />
+          </button>
+          <div className="toolbar-divider"></div>
+          <button 
+            className="toolbar-btn" 
+            onClick={() => setShowPreviewModal(true)}
+            title="Preview Presentation"
+          >
+            <Eye size={18} />
+            <span>Preview</span>
+          </button>
+        </div>
+        <div className="toolbar-center">
+          <span className="ppt-title">{ppt.title}</span>
+          <span className="slide-count">{ppt.slides.length} slides</span>
+        </div>
+        <div className="toolbar-right">
+          <button 
+            className="toolbar-btn" 
+            onClick={onClose}
+            title="Close Editor"
+          >
+            <X size={18} />
+          </button>
+        </div>
+      </div>
+
       {/* Left Sidebar - Slide Thumbnails */}
       <div className="editor-sidebar">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-          <h3 style={{ fontFamily: 'Orbitron, sans-serif', fontSize: '1rem' }}>Slides</h3>
-          <span style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>
-            {ppt.slides.length} slides
-          </span>
+        <div className="sidebar-header">
+          <h3>Slides</h3>
+          <button className="add-slide-btn-small" onClick={addSlide} title="Add Slide">
+            <Plus size={16} />
+          </button>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+        <div className="slides-list">
           {ppt.slides.map((slide, index) => (
             <div
               key={slide.id}
@@ -192,64 +374,97 @@ function SlideEditor({ pptId, onClose, onSave }) {
               onDrop={handleDrop}
             >
               <div className="slide-thumbnail-number">{index + 1}</div>
-              <div style={{ fontWeight: 600, marginBottom: '0.25rem', color: 'var(--text-primary)' }}>
-                {slide.title}
+              <div className="slide-thumbnail-content-wrapper">
+                <div className="slide-thumbnail-title">{slide.title}</div>
+                <div className="slide-thumbnail-text">
+                  {slide.content.substring(0, 40)}...
+                </div>
               </div>
-              <div className="slide-thumbnail-content">
-                {slide.content.substring(0, 50)}...
-              </div>
+              {slide.image_url && (
+                <div className="slide-thumbnail-has-image">
+                  <ImageIcon size={12} />
+                </div>
+              )}
             </div>
           ))}
         </div>
-
-        <button 
-          className="add-slide-btn" 
-          onClick={addSlide}
-          style={{ marginTop: '1rem' }}
-        >
-          <Plus size={20} />
-          Add Slide
-        </button>
       </div>
 
       {/* Center - Preview Canvas */}
       <div className="editor-canvas">
         {selectedSlide ? (
-          <div className="preview-slide animate-fadeIn">
-            <div className="preview-slide-title">
-              {selectedSlide.title}
+          <div className="canvas-slide animate-fadeIn">
+            <div className="canvas-slide-header">
+              <span className="canvas-slide-number">
+                Slide {ppt.slides.findIndex(s => s.id === selectedSlide.id) + 1} of {ppt.slides.length}
+              </span>
+              <div className="canvas-slide-actions">
+                <button 
+                  className="canvas-action-btn"
+                  onClick={() => duplicateSlide(selectedSlide.id)}
+                  title="Duplicate Slide"
+                >
+                  <Copy size={14} />
+                </button>
+                <button 
+                  className="canvas-action-btn delete"
+                  onClick={() => deleteSlide(selectedSlide.id)}
+                  title="Delete Slide"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
             </div>
-            <div className="preview-slide-content">
-              {selectedSlide.content}
+            <div className="canvas-slide-content">
+              <h2 className="canvas-slide-title">{selectedSlide.title}</h2>
+              <div className="canvas-slide-body">
+                {selectedSlide.content.split('\n').map((line, i) => (
+                  <p key={i} className="canvas-slide-line">{line}</p>
+                ))}
+              </div>
+              {selectedSlide.image_url && (
+                <div className="canvas-slide-image-wrapper">
+                  <img 
+                    src={selectedSlide.image_url} 
+                    alt="Slide" 
+                    className="canvas-slide-image"
+                  />
+                  <button 
+                    className="remove-image-btn"
+                    onClick={removeImageFromSlide}
+                    title="Remove Image"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         ) : (
-          <div style={{ color: 'var(--text-muted)', textAlign: 'center' }}>
-            Select a slide to preview
+          <div className="canvas-empty">
+            <Layout size={48} />
+            <p>Select a slide to preview</p>
           </div>
         )}
       </div>
 
       {/* Right Sidebar - Properties */}
       <div className="editor-properties">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-          <h3 style={{ fontFamily: 'Orbitron, sans-serif', fontSize: '1rem' }}>Properties</h3>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
-            <X size={20} />
-          </button>
+        <div className="properties-header">
+          <h3>Edit Slide</h3>
         </div>
 
         {message && (
-          <div className={`alert alert-${message.type}`} style={{ marginBottom: '1rem' }}>
+          <div className={`alert alert-${message.type}`}>
             {message.text}
           </div>
         )}
 
         {selectedSlide ? (
-          <div className="animate-slideIn">
-            <div style={{ marginBottom: '1.5rem' }}>
-              <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
-                <Type size={14} style={{ display: 'inline', marginRight: '0.5rem' }} />
+          <div className="properties-content animate-slideIn">
+            <div className="property-group">
+              <label className="property-label">
+                <Type size={14} />
                 Slide Title
               </label>
               <input
@@ -257,89 +472,170 @@ function SlideEditor({ pptId, onClose, onSave }) {
                 className="input"
                 value={selectedSlide.title}
                 onChange={(e) => updateSlide(selectedSlide.id, { title: e.target.value })}
+                placeholder="Enter slide title..."
               />
             </div>
 
-            <div style={{ marginBottom: '1.5rem' }}>
-              <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
-                <Layout size={14} style={{ display: 'inline', marginRight: '0.5rem' }} />
+            <div className="property-group">
+              <label className="property-label">
+                <Layout size={14} />
                 Content
               </label>
               <textarea
                 className="textarea"
                 value={selectedSlide.content}
                 onChange={(e) => updateSlide(selectedSlide.id, { content: e.target.value })}
-                style={{ minHeight: '200px' }}
+                placeholder="Enter slide content..."
+                rows={8}
               />
             </div>
 
-            <div style={{ marginBottom: '1.5rem' }}>
-              <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
-                Reorder Slide
+            <div className="property-group">
+              <label className="property-label">
+                <ImageIcon size={14} />
+                Image
               </label>
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
+              {selectedSlide.image_url ? (
+                <div className="current-image">
+                  <img src={selectedSlide.image_url} alt="Current" />
+                  <div className="current-image-actions">
+                    <button onClick={() => setShowImageSearch(true)}>
+                      <Search size={14} /> Change
+                    </button>
+                    <button onClick={removeImageFromSlide} className="remove">
+                      <Trash2 size={14} /> Remove
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="image-actions">
+                  <button 
+                    className="image-action-btn"
+                    onClick={() => setShowImageSearch(true)}
+                  >
+                    <Search size={16} />
+                    Search Images
+                  </button>
+                  <button 
+                    className="image-action-btn ai"
+                    onClick={generateAIImage}
+                  >
+                    <Sparkles size={16} />
+                    AI Suggest
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div className="property-group">
+              <label className="property-label">Reorder</label>
+              <div className="reorder-buttons">
                 <button 
-                  className="button button-secondary"
+                  className="reorder-btn"
                   onClick={() => moveSlide(selectedSlide.id, 'up')}
-                  style={{ flex: 1, padding: '0.5rem' }}
+                  disabled={ppt.slides.findIndex(s => s.id === selectedSlide.id) === 0}
                 >
                   <ChevronUp size={18} />
+                  Move Up
                 </button>
                 <button 
-                  className="button button-secondary"
+                  className="reorder-btn"
                   onClick={() => moveSlide(selectedSlide.id, 'down')}
-                  style={{ flex: 1, padding: '0.5rem' }}
+                  disabled={ppt.slides.findIndex(s => s.id === selectedSlide.id) === ppt.slides.length - 1}
                 >
                   <ChevronDown size={18} />
+                  Move Down
                 </button>
               </div>
             </div>
-
-            <button 
-              className="button button-danger"
-              onClick={() => deleteSlide(selectedSlide.id)}
-              style={{ width: '100%', marginBottom: '1rem' }}
-            >
-              <Trash2 size={18} style={{ marginRight: '0.5rem' }} />
-              Delete Slide
-            </button>
           </div>
         ) : (
-          <div style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '2rem 0' }}>
-            Select a slide to edit
+          <div className="properties-empty">
+            <Palette size={48} />
+            <p>Select a slide to edit</p>
           </div>
         )}
 
-        <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1.5rem', marginTop: 'auto' }}>
+        <div className="properties-footer">
           <button 
-            className="button"
+            className="button save-btn"
             onClick={savePPT}
             disabled={saving}
-            style={{ width: '100%', marginBottom: '0.75rem' }}
           >
             {saving ? (
               <>
-                <div className="spinner" style={{ width: 18, height: 18, borderWidth: 2, marginRight: '0.5rem' }} />
+                <div className="spinner" style={{ width: 16, height: 16, borderWidth: 2 }} />
                 Saving...
               </>
             ) : (
               <>
-                <Save size={18} style={{ marginRight: '0.5rem' }} />
+                <Save size={16} />
                 Save Changes
               </>
             )}
           </button>
 
           <button 
-            className="button button-success"
+            className="button download-btn"
             onClick={downloadPPT}
-            style={{ width: '100%' }}
           >
-            <Download size={18} style={{ marginRight: '0.5rem' }} />
+            <Download size={16} />
             Download PPT
           </button>
         </div>
       </div>
+
+      {/* Image Search Modal */}
+      {showImageSearch && (
+        <div className="image-search-modal" onClick={() => setShowImageSearch(false)}>
+          <div className="image-search-content" onClick={e => e.stopPropagation()}>
+            <div className="image-search-header">
+              <h3>
+                <ImageIcon size={20} />
+                Search Images
+              </h3>
+              <button onClick={() => setShowImageSearch(false)}>
+                <X size={20} />
+              </button>
+            </div>
+            <div className="image-search-input">
+              <input
+                type="text"
+                className="input"
+                value={imageSearchQuery}
+                onChange={(e) => setImageSearchQuery(e.target.value)}
+                placeholder="Search for images..."
+                onKeyPress={(e) => e.key === 'Enter' && searchImages()}
+              />
+              <button 
+                className="button"
+                onClick={searchImages}
+                disabled={searching}
+              >
+                {searching ? (
+                  <div className="spinner" style={{ width: 16, height: 16 }} />
+                ) : (
+                  <Search size={18} />
+                )}
+              </button>
+            </div>
+            <div className="image-search-results">
+              {searchResults.map((image) => (
+                <div 
+                  key={image.id} 
+                  className="image-result"
+                  onClick={() => addImageToSlide(image.url)}
+                >
+                  <img src={image.thumbnail} alt={imageSearchQuery} loading="lazy" />
+                  <div className="image-result-overlay">
+                    <span>Click to select</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
