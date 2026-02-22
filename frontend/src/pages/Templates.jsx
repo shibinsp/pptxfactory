@@ -9,11 +9,10 @@ import {
   FolderOpen, 
   Plus, 
   Eye, 
-  X,
-  Check,
   Star,
   Layout
 } from 'lucide-react'
+import TemplatePreviewModal from '../components/TemplatePreviewModal'
 
 const API_URL = 'http://localhost:8000'
 
@@ -26,7 +25,6 @@ function Templates() {
     description: ''
   })
   const [previewTemplate, setPreviewTemplate] = useState(null)
-  const [previewData, setPreviewData] = useState(null)
 
   useEffect(() => {
     fetchTemplates()
@@ -105,19 +103,12 @@ function Templates() {
     }
   }
 
-  const openPreview = async (template) => {
+  const openPreview = (template) => {
     setPreviewTemplate(template)
-    try {
-      const response = await axios.get(`${API_URL}/api/templates/${template.id}/preview`)
-      setPreviewData(response.data)
-    } catch (error) {
-      console.error('Error loading preview:', error)
-    }
   }
 
   const closePreview = () => {
     setPreviewTemplate(null)
-    setPreviewData(null)
   }
 
   // Group templates into built-in and custom
@@ -340,91 +331,11 @@ function Templates() {
 
       {/* Template Preview Modal */}
       {previewTemplate && (
-        <div className="template-preview-modal" onClick={closePreview}>
-          <div className="template-preview-content" onClick={e => e.stopPropagation()}>
-            <div className="template-preview-header">
-              <h3>{previewTemplate.name}</h3>
-              <button onClick={closePreview} className="close-btn">
-                <X size={24} />
-              </button>
-            </div>
-            
-            <div className="template-preview-body">
-              <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
-                {previewTemplate.description}
-              </p>
-              
-              {previewData ? (
-                <div className="template-preview-info">
-                  <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(2, 1fr)',
-                    gap: '1rem',
-                    marginBottom: '1.5rem'
-                  }}>
-                    <div style={{
-                      background: 'var(--bg-input)',
-                      padding: '1rem',
-                      borderRadius: '10px',
-                      textAlign: 'center'
-                    }}>
-                      <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--primary)' }}>
-                        {previewData.slide_count || '10+'}
-                      </div>
-                      <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Slides</div>
-                    </div>
-                    <div style={{
-                      background: 'var(--bg-input)',
-                      padding: '1rem',
-                      borderRadius: '10px',
-                      textAlign: 'center'
-                    }}>
-                      <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--primary)' }}>
-                        {previewTemplate.is_builtin ? 'Built-in' : 'Custom'}
-                      </div>
-                      <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Type</div>
-                    </div>
-                  </div>
-                  
-                  <h4 style={{ marginBottom: '1rem', fontFamily: 'Poppins, sans-serif' }}>
-                    Sample Slide Layouts
-                  </h4>
-                  
-                  <div className="template-preview-slides">
-                    <div className="template-preview-slide">
-                      <h4>Title Slide</h4>
-                      <p>Main presentation title and subtitle</p>
-                    </div>
-                    <div className="template-preview-slide">
-                      <h4>Content Slide</h4>
-                      <p>Title with bullet points and content area</p>
-                    </div>
-                    <div className="template-preview-slide">
-                      <h4>Section Header</h4>
-                      <p>Divider slide for new sections</p>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div style={{ textAlign: 'center', padding: '2rem' }}>
-                  <Loader2 size={32} style={{ animation: 'spin 1s linear infinite', color: 'var(--primary)' }} />
-                  <p style={{ color: 'var(--text-muted)', marginTop: '1rem' }}>Loading preview...</p>
-                </div>
-              )}
-            </div>
-            
-            <div className="template-preview-footer">
-              <button className="button button-secondary" onClick={closePreview}>
-                <X size={16} style={{ marginRight: '0.5rem' }} />
-                Close
-              </button>
-              <button className="button" onClick={closePreview}>
-                <Check size={16} style={{ marginRight: '0.5rem' }} />
-                Use This Template
-              </button>
-            </div>
-          </div>
-        </div>
+        <TemplatePreviewModal 
+          template={previewTemplate}
+          onClose={closePreview}
+          onUse={closePreview}
+        />
       )}
     </div>
   )
