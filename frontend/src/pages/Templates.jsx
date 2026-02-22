@@ -200,11 +200,11 @@ function Templates() {
         </div>
       </div>
 
-      {/* Built-in Templates */}
+      {/* Sample Templates */}
       <div className="card" style={{ marginBottom: '1.5rem' }}>
         <h3 style={{ fontFamily: 'Orbitron, sans-serif', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <Star size={20} style={{ color: 'var(--primary)' }} />
-          Built-in Templates ({builtinTemplates.length})
+          Sample Templates ({builtinTemplates.length})
         </h3>
         
         {builtinTemplates.length === 0 ? (
@@ -275,25 +275,14 @@ function Templates() {
         )}
       </div>
 
-      {/* Custom Templates */}
-      <div className="card">
-        <h3 style={{ fontFamily: 'Orbitron, sans-serif', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <FolderOpen size={20} />
-          Your Templates ({customTemplates.length})
-        </h3>
-        
-        {customTemplates.length === 0 ? (
-          <div style={{ 
-            color: 'var(--text-muted)', 
-            textAlign: 'center', 
-            padding: '3rem',
-            border: '2px dashed var(--border)',
-            borderRadius: '12px'
-          }}>
-            <File size={48} style={{ marginBottom: '1rem', opacity: 0.5 }} />
-            <p>No custom templates yet. Upload your first template above!</p>
-          </div>
-        ) : (
+      {/* Your Templates - Only User Created */}
+      {customTemplates.length > 0 && (
+        <div className="card">
+          <h3 style={{ fontFamily: 'Orbitron, sans-serif', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <FolderOpen size={20} />
+            Your Templates ({customTemplates.length})
+          </h3>
+          
           <div className="template-grid">
             {customTemplates.map((template) => (
               <div key={template.id} className="template-card">
@@ -346,8 +335,8 @@ function Templates() {
               </div>
             ))}
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Template Preview Modal */}
       {previewTemplate && (
