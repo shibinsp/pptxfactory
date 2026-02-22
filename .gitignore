@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+backend/venv/
+__pycache__/
+
+# Build outputs
+dist/
+build/
+
+# Environment
+.env
+.env.local
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Database
+*.db
+*.sqlite
+
+# Uploads
+uploads/
+templates/
+outputs/
