@@ -100,12 +100,12 @@ function AIGenerate() {
   if (showEditor && generatedPPT) {
     return (
       <div className="animate-fadeIn">
-        <div style={{ marginBottom: '1.5rem' }}>
-          <h2 style={{ fontFamily: 'Orbitron, sans-serif', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <Edit3 size={28} className="gradient-text" />
+        <div style={{ marginBottom: '1.25rem' }}>
+          <h2 style={{ fontFamily: 'Poppins, sans-serif', display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
+            <Edit3 size={24} className="gradient-text" />
             <span className="gradient-text">Edit Presentation</span>
           </h2>
-          <p style={{ color: 'var(--text-secondary)', marginTop: '0.5rem' }}>
+          <p style={{ color: 'var(--text-secondary)', marginTop: '0.375rem', fontSize: '0.9rem' }}>
             {generatedPPT.title}
           </p>
         </div>
@@ -120,51 +120,51 @@ function AIGenerate() {
 
   return (
     <div className="animate-fadeIn">
-      <div className="card" style={{ textAlign: 'center', padding: '3rem', marginBottom: '2rem' }}>
+      <div className="card" style={{ textAlign: 'center', padding: '2.5rem', marginBottom: '1.5rem' }}>
         <div style={{ 
-          width: '80px', 
-          height: '80px', 
-          margin: '0 auto 1.5rem',
+          width: '72px', 
+          height: '72px', 
+          margin: '0 auto 1.25rem',
           background: 'var(--gradient-primary)',
-          borderRadius: '20px',
+          borderRadius: '18px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center'
         }}>
-          <Sparkles size={40} color="white" />
+          <img src="/logo.png" alt="Bee" style={{ width: '48px', height: '48px', borderRadius: '10px' }} />
         </div>
         
-        <h2 style={{ fontFamily: 'Orbitron, sans-serif', fontSize: '2.5rem', marginBottom: '1rem' }}>
+        <h2 style={{ fontFamily: 'Poppins, sans-serif', fontSize: '2rem', marginBottom: '0.875rem' }}>
           <span className="gradient-text">AI Presentation Generator</span>
         </h2>
         
-        <p style={{ fontSize: '1.125rem', color: 'var(--text-secondary)', maxWidth: '600px', margin: '0 auto 2rem' }}>
+        <p style={{ fontSize: '1rem', color: 'var(--text-secondary)', maxWidth: '550px', margin: '0 auto 1.75rem' }}>
           Describe your presentation idea and let our AI create a professional, engaging slide deck in seconds.
         </p>
 
         {message && (
-          <div className={`alert alert-${message.type}`} style={{ maxWidth: '700px', margin: '0 auto 1.5rem' }}>
+          <div className={`alert alert-${message.type}`} style={{ maxWidth: '650px', margin: '0 auto 1.25rem' }}>
             {message.text}
           </div>
         )}
 
-        <div style={{ maxWidth: '700px', margin: '0 auto' }}>
+        <div style={{ maxWidth: '650px', margin: '0 auto' }}>
           <textarea
             className="textarea"
             placeholder="Example: Create a presentation about the benefits of artificial intelligence in healthcare, covering diagnosis accuracy, personalized treatment, and future trends..."
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
             style={{ 
-              minHeight: '120px', 
-              marginBottom: '1.5rem',
-              fontSize: '1.1rem'
+              minHeight: '100px', 
+              marginBottom: '1.25rem',
+              fontSize: '1rem'
             }}
           />
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.875rem', marginBottom: '1.25rem' }}>
             <div style={{ textAlign: 'left' }}>
-              <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
-                <Layers size={14} style={{ display: 'inline', marginRight: '0.5rem' }} />
+              <label style={{ display: 'block', marginBottom: '0.375rem', color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
+                <Layers size={14} style={{ display: 'inline', marginRight: '0.375rem' }} />
                 Number of Slides
               </label>
               <input
@@ -177,8 +177,8 @@ function AIGenerate() {
               />
             </div>
             <div style={{ textAlign: 'left' }}>
-              <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
-                <FileText size={14} style={{ display: 'inline', marginRight: '0.5rem' }} />
+              <label style={{ display: 'block', marginBottom: '0.375rem', color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
+                <FileText size={14} style={{ display: 'inline', marginRight: '0.375rem' }} />
                 Template (Optional)
               </label>
               <select 
@@ -200,16 +200,16 @@ function AIGenerate() {
             className="button"
             onClick={generateWithAI}
             disabled={loading}
-            style={{ width: '100%', fontSize: '1.125rem', padding: '1rem' }}
+            style={{ width: '100%', fontSize: '1rem', padding: '0.9rem' }}
           >
             {loading ? (
               <>
-                <Loader2 size={24} style={{ animation: 'spin 1s linear infinite' }} />
+                <Loader2 size={22} style={{ animation: 'spin 1s linear infinite' }} />
                 Generating with AI...
               </>
             ) : (
               <>
-                <Wand2 size={24} />
+                <Wand2 size={22} />
                 Generate Presentation
               </>
             )}
@@ -219,28 +219,28 @@ function AIGenerate() {
 
       {generatedPPT && (
         <div className="card animate-slideIn">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
             <div>
-              <h3 style={{ fontFamily: 'Orbitron, sans-serif', fontSize: '1.5rem', marginBottom: '0.5rem' }}>
+              <h3 style={{ fontFamily: 'Poppins, sans-serif', fontSize: '1.35rem', marginBottom: '0.375rem' }}>
                 {generatedPPT.title}
               </h3>
-              <p style={{ color: 'var(--text-secondary)' }}>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
                 {generatedPPT.slides_count} slides • {generatedPPT.ai_generated ? 'AI Generated' : 'Smart Template'}
               </p>
             </div>
-            <div style={{ display: 'flex', gap: '0.75rem' }}>
+            <div style={{ display: 'flex', gap: '0.625rem' }}>
               <button 
                 className="button button-secondary"
                 onClick={openEditor}
               >
-                <Edit3 size={18} style={{ marginRight: '0.5rem' }} />
+                <Edit3 size={16} style={{ marginRight: '0.375rem' }} />
                 Edit
               </button>
               <button 
                 className="button button-success"
                 onClick={downloadPPT}
               >
-                <Download size={18} style={{ marginRight: '0.5rem' }} />
+                <Download size={16} style={{ marginRight: '0.375rem' }} />
                 Download
               </button>
             </div>
@@ -248,9 +248,9 @@ function AIGenerate() {
 
           <div style={{ 
             display: 'grid', 
-            gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', 
-            gap: '1rem',
-            marginTop: '1.5rem'
+            gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', 
+            gap: '0.875rem',
+            marginTop: '1.25rem'
           }}>
             {generatedPPT.slides?.map((slide, index) => (
               <div 
@@ -259,11 +259,11 @@ function AIGenerate() {
                 style={{ cursor: 'default' }}
               >
                 <div className="slide-thumbnail-number">{index + 1}</div>
-                <div style={{ fontWeight: 600, marginBottom: '0.5rem', color: 'var(--text-primary)' }}>
+                <div style={{ fontWeight: 600, marginBottom: '0.375rem', color: 'var(--text-primary)', fontSize: '0.9rem' }}>
                   {slide.title}
                 </div>
                 <div className="slide-thumbnail-content">
-                  {slide.content?.substring(0, 80)}...
+                  {slide.content?.substring(0, 70)}...
                 </div>
               </div>
             ))}
@@ -271,37 +271,37 @@ function AIGenerate() {
         </div>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem', marginTop: '2rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem', marginTop: '1.5rem' }}>
         <div className="card" style={{ textAlign: 'center' }}>
-          <Zap size={40} style={{ color: 'var(--accent)', marginBottom: '1rem' }} />
-          <h3>Lightning Fast</h3>
-          <p style={{ color: 'var(--text-secondary)' }}>
+          <Zap size={36} style={{ color: 'var(--primary)', marginBottom: '0.875rem' }} />
+          <h3 style={{ fontFamily: 'Poppins, sans-serif', marginBottom: '0.625rem', fontSize: '1.05rem' }}>Lightning Fast</h3>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
             Generate complete presentations in seconds with our advanced AI.
           </p>
         </div>
 
         <div className="card" style={{ textAlign: 'center' }}>
-          <Edit3 size={40} style={{ color: 'var(--secondary)', marginBottom: '1rem' }} />
-          <h3>Full Control</h3>
-          <p style={{ color: 'var(--text-secondary)' }}>
+          <Edit3 size={36} style={{ color: 'var(--primary-light)', marginBottom: '0.875rem' }} />
+          <h3 style={{ fontFamily: 'Poppins, sans-serif', marginBottom: '0.625rem', fontSize: '1.05rem' }}>Full Control</h3>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
             Edit every slide with our Canva-like editor before downloading.
           </p>
         </div>
 
         <div className="card" style={{ textAlign: 'center' }}>
-          <Sparkles size={40} style={{ color: 'var(--primary-light)', marginBottom: '1rem' }} />
-          <h3>Professional Quality</h3>
-          <p style={{ color: 'var(--text-secondary)' }}>
+          <Sparkles size={36} style={{ color: 'var(--secondary)', marginBottom: '0.875rem' }} />
+          <h3 style={{ fontFamily: 'Poppins, sans-serif', marginBottom: '0.625rem', fontSize: '1.05rem' }}>Professional Quality</h3>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
             AI-generated content that's engaging, accurate, and ready to present.
           </p>
         </div>
       </div>
 
-      <div className="card" style={{ marginTop: '2rem' }}>
-        <h3 style={{ fontFamily: 'Orbitron, sans-serif', marginBottom: '1rem' }}>
+      <div className="card" style={{ marginTop: '1.5rem' }}>
+        <h3 style={{ fontFamily: 'Poppins, sans-serif', marginBottom: '0.875rem', fontSize: '1.15rem' }}>
           💡 Example Prompts
         </h3>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.875rem' }}>
           {[
             "Renewable energy benefits and future",
             "Digital marketing strategies for startups",
@@ -314,10 +314,10 @@ function AIGenerate() {
               key={i}
               className="button button-secondary"
               onClick={() => setPrompt(example)}
-              style={{ justifyContent: 'flex-start', textAlign: 'left' }}
+              style={{ justifyContent: 'flex-start', textAlign: 'left', padding: '0.7rem' }}
             >
-              <ChevronRight size={16} style={{ marginRight: '0.5rem', flexShrink: 0 }} />
-              {example}
+              <ChevronRight size={16} style={{ marginRight: '0.375rem', flexShrink: 0 }} />
+              <span style={{ fontSize: '0.85rem' }}>{example}</span>
             </button>
           ))}
         </div>

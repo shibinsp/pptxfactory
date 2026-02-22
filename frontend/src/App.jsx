@@ -18,14 +18,12 @@ function NavLink({ to, children }) {
 }
 
 function Navigation() {
-  const location = useLocation()
-  
   return (
     <nav className="nav">
       <NavLink to="/">Home</NavLink>
       <NavLink to="/ai-generate">
         <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-          <span>🤖</span>
+          <span>✨</span>
           <span>AI Generate</span>
         </span>
       </NavLink>
@@ -41,7 +39,10 @@ function App() {
       <div className="app">
         <header className="header">
           <Link to="/" style={{ textDecoration: 'none' }}>
-            <h1>🎯 PPT SaaS</h1>
+            <div className="logo-container">
+              <img src="/logo.png" alt="PPT SaaS Logo" />
+              <span className="logo-text">PPT SaaS</span>
+            </div>
           </Link>
           <Navigation />
         </header>
