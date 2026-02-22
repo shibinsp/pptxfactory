@@ -5,6 +5,7 @@ import CreatePPT from './pages/CreatePPT'
 import Templates from './pages/Templates'
 import AIGenerate from './pages/AIGenerate'
 import HistoryPage from './pages/History'
+import LandingPage from './pages/LandingPage'
 import './index.css'
 
 function NavLink({ to, children }) {
@@ -49,9 +50,10 @@ function App() {
           <Navigation />
         </header>
         
-        <main className="main">
+        <main className="main" style={{ padding: 0, maxWidth: '100%' }}>
           <Routes>
-            <Route path="/" element={<Home />} />
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/home" element={<Home />} />
             <Route path="/ai-generate" element={<AIGenerate />} />
             <Route path="/create" element={<CreatePPT />} />
             <Route path="/templates" element={<Templates />} />
