@@ -15,6 +15,7 @@ import {
   Check
 } from 'lucide-react'
 import SlideEditor from '../components/SlideEditor'
+import PreviewModal from '../components/PreviewModal'
 
 const API_URL = 'http://localhost:8000'
 
@@ -107,51 +108,15 @@ function AIGenerate() {
   // Preview Modal
   if (showPreview && generatedPPT) {
     return (
-      <div className="preview-modal-overlay" onClick={() => setShowPreview(false)}>
-        <div className="preview-modal-content" onClick={e => e.stopPropagation()}>
-          <div className="preview-modal-header">
-            <div>
-              <h3>{generatedPPT.title}</h3>
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginTop: '0.25rem' }}>
-                {generatedPPT.slides_count} slides • Preview Mode
-              </p>
-            </div>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <button 
-                className="button button-secondary"
-                onClick={() => setShowPreview(false)}
-              >
-                <Edit3 size={16} style={{ marginRight: '0.375rem' }} />
-                Edit
-              </button>
-              <button 
-                className="button button-success"
-                onClick={downloadPPT}
-              >
-                <Download size={16} style={{ marginRight: '0.375rem' }} />
-                Download
-              </button>
-              <button onClick={() => setShowPreview(false)} className="close-btn">
-                <X size={24} />
-              </button>
-            </div>
-          </div>
-          <div className="preview-modal-slides">
-            {generatedPPT.slides?.map((slide, index) => (
-              <div key={slide.id} className="preview-slide-card">
-                <div className="preview-slide-number">{index + 1}</div>
-                <div className="preview-slide-card-inner">
-                  <h4>{slide.title}</h4>
-                  <p>{slide.content}</p>
-                  {slide.image_url && (
-                    <img src={slide.image_url} alt={slide.title} className="preview-slide-image" />
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
+      <PreviewModal 
+        ppt={generatedPPT}
+        onClose={() => setShowPreview(false)}
+        onEdit={() => {
+          setShowPreview(false)
+          setShowEditor(true)
+        }}
+        onDownload={downloadPPT}
+      />
     )
   }
 
