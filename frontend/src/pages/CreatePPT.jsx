@@ -1,16 +1,19 @@
 import React, { useState, useEffect } from 'react'
 import axios from 'axios'
-import { Plus, Trash2, Download, Loader2 } from 'lucide-react'
+import { Plus, Trash2, Download, Loader2, FileText, Layers, GripVertical } from 'lucide-react'
+import SlideEditor from '../components/SlideEditor'
 
 const API_URL = 'http://localhost:8000'
 
 function CreatePPT() {
   const [title, setTitle] = useState('')
-  const [slides, setSlides] = useState([{ title: '', content: '' }])
+  const [slides, setSlides] = useState([{ id: '1', title: '', content: '', order: 0 }])
   const [templates, setTemplates] = useState([])
   const [selectedTemplate, setSelectedTemplate] = useState(null)
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState(null)
+  const [generatedPPT, setGeneratedPPT] = useState(null)
+  const [showEditor, setShowEditor] = useState(false)
 
   useEffect(() => {
     fetchTemplates()
@@ -26,24 +29,60 @@ function CreatePPT() {
   }
 
   const addSlide = () => {
-    setSlides([...slides, { title: '', content: '' }])
+    setSlides([...slides, { 
+      id: Date.now().toString(), 
+      title: '', 
+      content: '', 
+      order: slides.length 
+    }])
   }
 
-  const removeSlide = (index) => {
+  const removeSlide = (id) => {
     if (slides.length > 1) {
-      setSlides(slides.filter((_, i) => i !== index))
+      const newSlides = slides.filter(s => s.id !== id)
+      // Reorder
+      newSlides.forEach((s, i) => s.order = i)
+      setSlides(newSlides)
     }
   }
 
-  const updateSlide = (index, field, value) => {
+  const updateSlide = (id, field, value) => {
+    setSlides(slides.map(s => 
+      s.id === id ? { ...s, [field]: value } : s
+    ))
+  }
+
+  const moveSlide = (index, direction) => {
+    if (
+      (direction === 'up' && index === 0) ||
+      (direction === 'down' && index === slides.length - 1)
+    ) {
+      return
+    }
+
     const newSlides = [...slides]
-    newSlides[index][field] = value
+    const targetIndex = direction === 'up' ? index - 1 : index + 1
+    
+    // Swap orders
+    const tempOrder = newSlides[index].order
+    newSlides[index].order = newSlides[targetIndex].order
+    newSlides[targetIndex].order = tempOrder
+    
+    // Sort by order
+    newSlides.sort((a, b) => a.order - b.order)
     setSlides(newSlides)
   }
 
   const generatePPT = async () => {
     if (!title.trim()) {
       setMessage({ type: 'error', text: 'Please enter a presentation title' })
+      return
+    }
+
+    // Validate slides
+    const hasEmptySlides = slides.some(s => !s.title.trim() || !s.content.trim())
+    if (hasEmptySlides) {
+      setMessage({ type: 'error', text: 'Please fill in all slide titles and content' })
       return
     }
 
@@ -63,10 +102,8 @@ function CreatePPT() {
       })
 
       if (response.data.success) {
+        setGeneratedPPT(response.data)
         setMessage({ type: 'success', text: 'Presentation generated successfully!' })
-        // Trigger download
-        const downloadUrl = `${API_URL}${response.data.download_url}`
-        window.open(downloadUrl, '_blank')
       }
     } catch (error) {
       setMessage({ type: 'error', text: 'Error generating presentation. Please try again.' })
@@ -76,9 +113,39 @@ function CreatePPT() {
     }
   }
 
+  const openEditor = () => {
+    setShowEditor(true)
+  }
+
+  const closeEditor = () => {
+    setShowEditor(false)
+  }
+
+  if (showEditor && generatedPPT) {
+    return (
+      <div className="animate-fadeIn">
+        <div style={{ marginBottom: '1.5rem' }}>
+          <h2 style={{ fontFamily: 'Orbitron, sans-serif', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <span className="gradient-text">Edit Presentation</span>
+          </h2>
+        </div>
+        <SlideEditor 
+          pptId={generatedPPT.ppt_id} 
+          onClose={closeEditor}
+          onSave={() => setMessage({ type: 'success', text: 'Saved!' })}
+        />
+      </div>
+    )
+  }
+
   return (
-    <div>
-      <h2>Create Presentation</h2>
+    <div className="animate-fadeIn">
+      <h2 style={{ fontFamily: 'Orbitron, sans-serif', marginBottom: '0.5rem' }}>
+        <span className="gradient-text">Create Presentation</span>
+      </h2>
+      <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
+        Build your presentation slide by slide with full control over content.
+      </p>
 
       {message && (
         <div className={`alert alert-${message.type}`}>
@@ -86,8 +153,11 @@ function CreatePPT() {
         </div>
       )}
 
-      <div className="card">
-        <h3>Presentation Title</h3>
+      <div className="card" style={{ marginBottom: '1.5rem' }}>
+        <h3 style={{ fontFamily: 'Orbitron, sans-serif', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <FileText size={20} />
+          Presentation Title
+        </h3>
         <input
           type="text"
           className="input"
@@ -98,9 +168,11 @@ function CreatePPT() {
       </div>
 
       {templates.length > 0 && (
-        <div className="card">
-          <h3>Select Template (Optional)</h3>
-          <div className="template-grid">
+        <div className="card" style={{ marginBottom: '1.5rem' }}>
+          <h3 style={{ fontFamily: 'Orbitron, sans-serif', marginBottom: '1rem' }}>
+            Select Template (Optional)
+          </h3>
+          <div className="template-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))' }}>
             {templates.map((template) => (
               <div
                 key={template.id}
@@ -110,37 +182,69 @@ function CreatePPT() {
                 )}
               >
                 <h4>{template.name}</h4>
-                <p style={{ color: '#666', fontSize: '0.875rem' }}>{template.description}</p>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>{template.description}</p>
               </div>
             ))}
           </div>
         </div>
       )}
 
-      <div className="card">
-        <h3>Slides</h3>
+      <div className="card" style={{ marginBottom: '1.5rem' }}>
+        <h3 style={{ fontFamily: 'Orbitron, sans-serif', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <Layers size={20} />
+          Slides ({slides.length})
+        </h3>
         
-        {slides.map((slide, index) => (
-          <div key={index} className="slide-editor">
+        {slides.sort((a, b) => a.order - b.order).map((slide, index) => (
+          <div key={slide.id} className="slide-editor">
             <div className="slide-header">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                 <div className="slide-number">{index + 1}</div>
-                <span>Slide {index + 1}</span>
+                <span style={{ color: 'var(--text-secondary)' }}>Slide {index + 1}</span>
               </div>
               
-              {slides.length > 1 && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <button
-                  onClick={() => removeSlide(index)}
+                  onClick={() => moveSlide(index, 'up')}
+                  disabled={index === 0}
                   style={{
                     background: 'none',
                     border: 'none',
-                    cursor: 'pointer',
-                    color: '#ef4444'
+                    cursor: index === 0 ? 'not-allowed' : 'pointer',
+                    color: index === 0 ? 'var(--text-muted)' : 'var(--text-secondary)',
+                    padding: '0.25rem'
                   }}
                 >
-                  <Trash2 size={20} />
+                  ▲
                 </button>
-              )}
+                <button
+                  onClick={() => moveSlide(index, 'down')}
+                  disabled={index === slides.length - 1}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    cursor: index === slides.length - 1 ? 'not-allowed' : 'pointer',
+                    color: index === slides.length - 1 ? 'var(--text-muted)' : 'var(--text-secondary)',
+                    padding: '0.25rem'
+                  }}
+                >
+                  ▼
+                </button>
+                {slides.length > 1 && (
+                  <button
+                    onClick={() => removeSlide(slide.id)}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      color: '#ef4444',
+                      padding: '0.25rem'
+                    }}
+                  >
+                    <Trash2 size={18} />
+                  </button>
+                )}
+              </div>
             </div>
             
             <input
@@ -148,43 +252,65 @@ function CreatePPT() {
               className="input"
               placeholder="Slide title..."
               value={slide.title}
-              onChange={(e) => updateSlide(index, 'title', e.target.value)}
-              style={{ marginBottom: '0.5rem' }}
+              onChange={(e) => updateSlide(slide.id, 'title', e.target.value)}
+              style={{ marginBottom: '0.75rem' }}
             />
             
             <textarea
               className="textarea"
-              placeholder="Slide content..."
+              placeholder="Slide content (use • for bullet points)..."
               value={slide.content}
-              onChange={(e) => updateSlide(index, 'content', e.target.value)}
+              onChange={(e) => updateSlide(slide.id, 'content', e.target.value)}
+              style={{ minHeight: '100px' }}
             />
           </div>
         ))}
         
         <button className="add-slide-btn" onClick={addSlide}>
-          <Plus size={20} style={{ display: 'inline', marginRight: '0.5rem' }} />
+          <Plus size={20} />
           Add Slide
         </button>
       </div>
 
-      <button
-        className="button"
-        onClick={generatePPT}
-        disabled={loading}
-        style={{ width: '100%', fontSize: '1.25rem' }}
-      >
-        {loading ? (
-          <>
-            <Loader2 size={20} style={{ display: 'inline', marginRight: '0.5rem', animation: 'spin 1s linear infinite' }} />
-            Generating...
-          </>
-        ) : (
-          <>
-            <Download size={20} style={{ display: 'inline', marginRight: '0.5rem' }} />
-            Generate Presentation
-          </>
-        )}
-      </button>
+      {generatedPPT ? (
+        <div className="card animate-fadeIn" style={{ marginBottom: '1.5rem' }}>
+          <h3 style={{ fontFamily: 'Orbitron, sans-serif', marginBottom: '1rem', color: '#10b981' }}>
+            ✅ Presentation Created!
+          </h3>
+          <div style={{ display: 'flex', gap: '1rem' }}>
+            <button className="button" onClick={openEditor} style={{ flex: 1 }}>
+              Edit Presentation
+            </button>
+            <button 
+              className="button button-success" 
+              onClick={() => window.open(`${API_URL}${generatedPPT.download_url}`, '_blank')}
+              style={{ flex: 1 }}
+            >
+              <Download size={18} style={{ marginRight: '0.5rem' }} />
+              Download
+            </button>
+          </div>
+        </div>
+      ) : (
+        <button
+          className="button"
+          onClick={generatePPT}
+          disabled={loading}
+          style={{ width: '100%', fontSize: '1.125rem', padding: '1rem' }}
+        >
+          {loading ? (
+            <>
+              <Loader2 size={22} style={{ animation: 'spin 1s linear infinite' }} />
+              Generating...
+            </>
+          ) : (
+            <>
+              <Download size={22} style={{ marginRight: '0.5rem' }} />
+              Generate Presentation
+            </>
+          )}
+        </button>
+      )}
     </div>
   )
 }

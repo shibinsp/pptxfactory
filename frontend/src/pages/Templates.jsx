@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import axios from 'axios'
 import { useDropzone } from 'react-dropzone'
-import { Upload, File, Trash2, Loader2 } from 'lucide-react'
+import { Upload, File, Trash2, Loader2, FolderOpen, Plus } from 'lucide-react'
 
 const API_URL = 'http://localhost:8000'
 
@@ -87,8 +87,13 @@ function Templates() {
   }
 
   return (
-    <div>
-      <h2>Templates</h2>
+    <div className="animate-fadeIn">
+      <h2 style={{ fontFamily: 'Orbitron, sans-serif', marginBottom: '0.5rem' }}>
+        <span className="gradient-text">Templates</span>
+      </h2>
+      <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
+        Upload and manage your PowerPoint templates for consistent branding.
+      </p>
 
       {message && (
         <div className={`alert alert-${message.type}`}>
@@ -96,8 +101,11 @@ function Templates() {
         </div>
       )}
 
-      <div className="card">
-        <h3>Upload New Template</h3>
+      <div className="card" style={{ marginBottom: '1.5rem' }}>
+        <h3 style={{ fontFamily: 'Orbitron, sans-serif', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <Plus size={20} />
+          Upload New Template
+        </h3>
         
         <div style={{ marginBottom: '1rem' }}>
           <input
@@ -106,7 +114,7 @@ function Templates() {
             placeholder="Template name..."
             value={uploadData.name}
             onChange={(e) => setUploadData({ ...uploadData, name: e.target.value })}
-            style={{ marginBottom: '0.5rem' }}
+            style={{ marginBottom: '0.75rem' }}
           />
           <input
             type="text"
@@ -125,54 +133,91 @@ function Templates() {
           
           {uploading ? (
             <div>
-              <Loader2 size={48} style={{ animation: 'spin 1s linear infinite' }} />
-              <p>Uploading...</p>
+              <Loader2 size={48} style={{ animation: 'spin 1s linear infinite', color: 'var(--primary)' }} />
+              <p style={{ color: 'var(--text-secondary)', marginTop: '1rem' }}>Uploading...</p>
             </div>
           ) : (
             <div>
-              <Upload size={48} style={{ color: '#667eea', marginBottom: '1rem' }} />
-              <p>Drag & drop a .pptx file here, or click to select</p>
+              <div style={{
+                width: '64px',
+                height: '64px',
+                margin: '0 auto 1rem',
+                background: 'var(--gradient-primary)',
+                borderRadius: '16px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                <Upload size={32} color="white" />
+              </div>
+              <p style={{ color: 'var(--text-primary)', fontWeight: 600, marginBottom: '0.5rem' }}>
+                {isDragActive ? 'Drop the file here' : 'Drag & drop a .pptx file here'}
+              </p>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>
+                or click to select file
+              </p>
             </div>
           )}
         </div>
       </div>
 
       <div className="card">
-        <h3>Your Templates ({templates.length})</h3>
+        <h3 style={{ fontFamily: 'Orbitron, sans-serif', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <FolderOpen size={20} />
+          Your Templates ({templates.length})
+        </h3>
         
         {templates.length === 0 ? (
-          <p style={{ color: '#666', textAlign: 'center', padding: '2rem' }}>
-            No templates yet. Upload your first template above!
-          </p>
+          <div style={{ 
+            color: 'var(--text-muted)', 
+            textAlign: 'center', 
+            padding: '3rem',
+            border: '2px dashed var(--border)',
+            borderRadius: '12px'
+          }}>
+            <File size={48} style={{ marginBottom: '1rem', opacity: 0.5 }} />
+            <p>No templates yet. Upload your first template above!</p>
+          </div>
         ) : (
           <div className="template-grid">
             {templates.map((template) => (
-              <div key={template.id} className="template-card">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                  <File size={20} style={{ color: '#667eea' }} />
-                  <h4 style={{ margin: 0 }}>{template.name}</h4>
+              <div key={template.id} className="template-card" style={{ position: 'relative' }}>
+                <div style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '0.75rem', 
+                  marginBottom: '0.75rem'
+                }}>
+                  <div style={{
+                    width: '40px',
+                    height: '40px',
+                    background: 'var(--gradient-primary)',
+                    borderRadius: '10px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}>
+                    <File size={20} color="white" />
+                  </div>
+                  <h4 style={{ margin: 0, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {template.name}
+                  </h4>
                 </div>
                 
-                <p style={{ color: '#666', fontSize: '0.875rem', marginBottom: '1rem' }}>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '1rem', minHeight: '40px' }}>
                   {template.description || 'No description'}
                 </p>
                 
                 <button
                   onClick={() => deleteTemplate(template.id)}
+                  className="button button-danger"
                   style={{
-                    background: '#ef4444',
-                    color: 'white',
-                    border: 'none',
-                    padding: '0.5rem 1rem',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
+                    width: '100%',
+                    padding: '0.5rem',
                     fontSize: '0.875rem'
                   }}
                 >
-                  <Trash2 size={16} />
+                  <Trash2 size={16} style={{ marginRight: '0.5rem' }} />
                   Delete
                 </button>
               </div>

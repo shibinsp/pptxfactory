@@ -1,90 +1,243 @@
-# 🎯 PPT SaaS Application
+<div align="center">
 
-A full-stack SaaS application for creating PowerPoint presentations with AI assistance.
+<img src="https://img.shields.io/badge/PPT-SaaS-6366f1?style=for-the-badge&logo=powerpoint&logoColor=white" alt="PPT SaaS">
 
-## Features
+# 🎯 PPT SaaS
 
-- ✅ **Upload PPT Templates** - Upload and reuse your existing PowerPoint templates
-- ✅ **AI-Powered Generation** - Generate presentations from text prompts
-- ✅ **Custom Slide Editor** - Create presentations from scratch
-- ✅ **Web Application** - React-based modern UI
-- ✅ **Desktop Application** - Electron app for Windows, Mac, and Linux
-- ✅ **FastAPI Backend** - High-performance Python backend
+### **AI-Powered Presentation Generator**
 
-## Tech Stack
+[![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=white)](https://reactjs.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.104-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![Mistral AI](https://img.shields.io/badge/Mistral%20AI-Powered-FF6B6B?style=flat)](https://mistral.ai/)
+[![License](https://img.shields.io/badge/License-MIT-8B5CF6.svg)](LICENSE)
 
-- **Frontend**: React + Vite
-- **Backend**: FastAPI (Python)
-- **Desktop**: Electron
-- **PPT Generation**: python-pptx
+**Create stunning presentations in seconds with AI. Edit like a pro with our Canva-like editor.**
 
-## Project Structure
+[🚀 Live Demo](http://localhost:3000) • [📖 Documentation](#documentation) • [🛠️ Installation](#installation)
 
-```
-ppt-saas-app/
-├── backend/          # FastAPI backend
-│   ├── main.py      # Main API
-│   ├── requirements.txt
-│   └── venv/        # Python virtual environment
-├── frontend/        # React frontend
-│   ├── src/
-│   ├── package.json
-│   └── vite.config.js
-├── desktop/         # Electron desktop app
-│   ├── main.js
-│   ├── preload.js
-│   └── package.json
-└── start.sh         # Startup script
-```
+<img src="https://user-images.githubusercontent.com/placeholder/demo.gif" alt="Demo" width="800">
 
-## Quick Start
+</div>
 
-### 1. Start the Application
+---
+
+## ✨ Features
+
+### 🤖 AI-Powered Generation
+- **Mistral AI Integration** - Generate professional presentations from simple text prompts
+- **Smart Templates** - Fallback to topic-specific templates when AI quota is exceeded
+- **Custom Slide Count** - Choose between 3-15 slides per presentation
+
+### 🎨 Canva-Like Editor
+- **Visual Slide Editor** - 3-panel layout (thumbnails, preview, properties)
+- **Drag & Drop** - Reorder slides with intuitive drag and drop
+- **Live Preview** - See changes in real-time as you edit
+- **Full Control** - Add, delete, reorder, and customize every slide
+
+### 🌌 Futuristic UI
+- **Dark Theme** - Sleek dark interface with neon accents
+- **Glass Morphism** - Modern translucent design elements
+- **Smooth Animations** - Polished transitions and hover effects
+- **Responsive Design** - Works seamlessly on desktop and mobile
+
+### 📊 Presentation Management
+- **Template System** - Upload and reuse custom PowerPoint templates
+- **Export to PPTX** - Download presentations in standard PowerPoint format
+- **Edit & Save** - Modify presentations anytime after creation
+
+---
+
+## 🚀 Quick Start
+
+### Prerequisites
+- Python 3.9+
+- Node.js 18+
+- npm or yarn
+
+### Installation
 
 ```bash
-cd /root/.openclaw/workspace/ppt-saas-app
+# Clone the repository
+git clone https://github.com/yourusername/ppt-saas.git
+cd ppt-saas
+
+# Setup Backend
+cd backend
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install -r requirements.txt
+
+# Setup Frontend
+cd ../frontend
+npm install
+
+# Start the application
+cd ..
 ./start.sh
 ```
 
-This will start:
-- Backend: http://localhost:8000
-- Frontend: http://localhost:3000
+### Access the Application
 
-### 2. Access the Application
+| Service | URL | Description |
+|---------|-----|-------------|
+| Web App | http://localhost:3000 | React Frontend |
+| API | http://localhost:8000 | FastAPI Backend |
+| API Docs | http://localhost:8000/docs | Swagger Documentation |
 
-- **Web App**: http://localhost:3000
-- **API Docs**: http://localhost:8000/docs
+---
 
-### 3. Build for Production
+## 📸 Screenshots
 
+<div align="center">
+
+### AI Generation Interface
+<img src="https://via.placeholder.com/800x450/0a0a0f/6366f1?text=AI+Generation+Interface" alt="AI Generation" width="800">
+
+### Canva-Like Editor
+<img src="https://via.placeholder.com/800x450/0a0a0f/ec4899?text=Visual+Editor" alt="Editor" width="800">
+
+### Template Management
+<img src="https://via.placeholder.com/800x450/0a0a0f/06b6d4?text=Template+Management" alt="Templates" width="800">
+
+</div>
+
+---
+
+## 🛠️ Tech Stack
+
+### Backend
+- **FastAPI** - High-performance Python web framework
+- **Mistral AI** - State-of-the-art language model for content generation
+- **python-pptx** - PowerPoint file manipulation
+- **Uvicorn** - ASGI server
+
+### Frontend
+- **React 18** - Modern UI library
+- **Vite** - Next-generation frontend tooling
+- **React Router** - Client-side routing
+- **Axios** - HTTP client
+- **Lucide React** - Beautiful icons
+
+### Desktop (Optional)
+- **Electron** - Cross-platform desktop applications
+
+---
+
+## 📚 API Documentation
+
+### Generate Presentation with AI
+```http
+POST /api/ppt/generate-ai
+Content-Type: application/json
+
+{
+  "prompt": "Benefits of renewable energy",
+  "num_slides": 5,
+  "template_id": "optional-template-id"
+}
+```
+
+### Get Presentation for Editing
+```http
+GET /api/ppt/{ppt_id}
+```
+
+### Update Presentation
+```http
+PUT /api/ppt/{ppt_id}
+Content-Type: application/json
+
+{
+  "title": "Updated Title",
+  "slides": [
+    {
+      "id": "slide-1",
+      "title": "New Title",
+      "content": "New content",
+      "order": 0
+    }
+  ]
+}
+```
+
+### Download Presentation
+```http
+GET /api/ppt/download/{ppt_id}
+```
+
+---
+
+## 🎨 Customization
+
+### Themes
+The application supports custom themes via CSS variables:
+
+```css
+:root {
+  --primary: #6366f1;
+  --secondary: #ec4899;
+  --accent: #06b6d4;
+  --bg-dark: #0a0a0f;
+  --bg-card: #12121a;
+}
+```
+
+### Templates
+Upload your own `.pptx` templates to maintain consistent branding across presentations.
+
+---
+
+## 🚀 Deployment
+
+### Docker (Coming Soon)
+```bash
+docker-compose up -d
+```
+
+### Production Build
 ```bash
 # Build frontend
 cd frontend
 npm run build
 
-# Build desktop app
-cd ../desktop
-npm install
-npm run build
+# Start production server
+cd ../backend
+uvicorn main:app --host 0.0.0.0 --port 8000
 ```
 
-## API Endpoints
+---
 
-- `POST /api/ppt/generate` - Generate PPT from content
-- `GET /api/ppt/download/{ppt_id}` - Download generated PPT
-- `POST /api/templates/upload` - Upload PPT template
-- `GET /api/templates` - List all templates
-- `DELETE /api/templates/{template_id}` - Delete template
+## 🤝 Contributing
 
-## Deployment
+Contributions are welcome! Please feel free to submit a Pull Request.
 
-The application is ready to deploy to your server. The backend runs on port 8000 and the frontend on port 3000.
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
-For production deployment:
-1. Build the frontend: `cd frontend && npm run build`
-2. Serve static files from `frontend/dist/`
-3. Run backend with: `cd backend && source venv/bin/activate && uvicorn main:app --host 0.0.0.0 --port 8000`
+---
 
-## License
+## 📝 License
 
-MIT
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## 🙏 Acknowledgments
+
+- [Mistral AI](https://mistral.ai/) for providing the AI capabilities
+- [FastAPI](https://fastapi.tiangolo.com/) for the amazing backend framework
+- [React](https://reactjs.org/) for the frontend library
+- [python-pptx](https://python-pptx.readthedocs.io/) for PowerPoint manipulation
+
+---
+
+<div align="center">
+
+**Made with ❤️ and ☕**
+
+[⬆ Back to Top](#-ppt-saas)
+
+</div>
