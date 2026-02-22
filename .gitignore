@@ -33,4 +33,4 @@ outputs/
 
 # Templates - allow base templates but not uploaded user templates
 backend/templates/*.json
-backend/templates/*-*
+# Note: UUID template files are allowed, only user uploads with timestamps are ignored
