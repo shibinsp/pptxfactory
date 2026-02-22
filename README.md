@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="https://img.shields.io/badge/PPT-SaaS-6366f1?style=for-the-badge&logo=powerpoint&logoColor=white" alt="PPT SaaS">
+<img src="logo.png" alt="PPT SaaS Logo" width="150" style="border-radius: 20px; margin-bottom: 20px;">
 
 # 🎯 PPT SaaS
 
@@ -10,14 +10,28 @@
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.104-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
 [![Mistral AI](https://img.shields.io/badge/Mistral%20AI-Powered-FF6B6B?style=flat)](https://mistral.ai/)
 [![License](https://img.shields.io/badge/License-MIT-8B5CF6.svg)](LICENSE)
+[![Version](https://img.shields.io/badge/Version-1.0.0-6366f1.svg)](https://github.com/shibinsp/pptxfactory/releases)
 
 **Create stunning presentations in seconds with AI. Edit like a pro with our Canva-like editor.**
 
-[🚀 Live Demo](http://localhost:3000) • [📖 Documentation](#documentation) • [🛠️ Installation](#installation)
-
-<img src="https://user-images.githubusercontent.com/placeholder/demo.gif" alt="Demo" width="800">
+[🚀 Live Demo](http://localhost:3000) • [📖 Documentation](#documentation) • [🛠️ Installation](#installation) • [📦 Releases](https://github.com/shibinsp/pptxfactory/releases)
 
 </div>
+
+---
+
+## 📋 About
+
+**PPT SaaS** is a modern, AI-powered presentation generation platform that helps users create professional PowerPoint presentations effortlessly. Built with cutting-edge technologies like React, FastAPI, and Mistral AI, it offers a seamless experience from idea to presentation.
+
+### Why PPT SaaS?
+
+- 🚀 **Lightning Fast** - Generate complete presentations in seconds
+- 🤖 **AI-Powered** - Leverages Mistral AI for intelligent content generation
+- 🎨 **Visual Editor** - Canva-like interface for intuitive slide editing
+- 🌙 **Modern UI** - Futuristic dark theme with glass morphism design
+- 📱 **Responsive** - Works seamlessly across devices
+- 💾 **Export Ready** - Download as standard PowerPoint (.pptx) files
 
 ---
 
@@ -58,8 +72,8 @@
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/ppt-saas.git
-cd ppt-saas
+git clone https://github.com/shibinsp/pptxfactory.git
+cd pptxfactory
 
 # Setup Backend
 cd backend
@@ -204,6 +218,14 @@ npm run build
 cd ../backend
 uvicorn main:app --host 0.0.0.0 --port 8000
 ```
+
+---
+
+## 📦 Version History
+
+| Version | Date | Changes |
+|---------|------|---------|
+| **v1.0.0** | 2026-02-22 | Initial release with AI generation, Canva-like editor, and futuristic UI |
 
 ---
 
