@@ -15,13 +15,12 @@ import {
   Palette,
   Search,
   Eye,
-  Monitor,
-  Smartphone,
   Undo,
   Redo,
   Copy,
   Sparkles
 } from 'lucide-react'
+import PreviewModal from './PreviewModal'
 
 const API_URL = 'http://localhost:8000'
 
@@ -280,30 +279,12 @@ function SlideEditor({ pptId, onClose, onSave }) {
   // Preview Modal
   if (showPreviewModal) {
     return (
-      <div className="preview-modal-overlay" onClick={() => setShowPreviewModal(false)}>
-        <div className="preview-modal-content" onClick={e => e.stopPropagation()}>
-          <div className="preview-modal-header">
-            <h3>Presentation Preview</h3>
-            <button onClick={() => setShowPreviewModal(false)} className="close-btn">
-              <X size={24} />
-            </button>
-          </div>
-          <div className="preview-modal-slides">
-            {ppt.slides.map((slide, index) => (
-              <div key={slide.id} className="preview-slide-card">
-                <div className="preview-slide-number">{index + 1}</div>
-                <div className="preview-slide-card-inner">
-                  <h4>{slide.title}</h4>
-                  <p>{slide.content}</p>
-                  {slide.image_url && (
-                    <img src={slide.image_url} alt={slide.title} className="preview-slide-image" />
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
+      <PreviewModal 
+        ppt={ppt}
+        onClose={() => setShowPreviewModal(false)}
+        onEdit={() => setShowPreviewModal(false)}
+        onDownload={() => window.open(`${API_URL}/api/ppt/download/${pptId}`, '_blank')}
+      />
     )
   }
 
