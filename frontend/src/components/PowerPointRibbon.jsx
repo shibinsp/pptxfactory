@@ -19,7 +19,7 @@ import {
   Image,
   Layout,
   Table,
-  ChartColumn,
+  BarChart3,
   Shapes,
   Film,
   Sparkles,
@@ -234,7 +234,7 @@ function PowerPointRibbon({
       <div className="ribbon-group">
         <div className="ribbon-buttons">
           <button className="ribbon-btn large" onClick={onInsertChart} title="Chart">
-            <ChartColumn size={24} />
+            <BarChart3 size={24} />
             <span>Chart</span>
           </button>
           <button className="ribbon-btn large" onClick={onInsertTable} title="Table">

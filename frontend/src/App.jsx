@@ -1,5 +1,7 @@
 import React, { useState } from 'react'
-import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom'
+import { BrowserRouter, HashRouter, Routes, Route, Link, useLocation } from 'react-router-dom'
+
+const Router = window.electronAPI ? HashRouter : BrowserRouter
 import Home from './pages/Home'
 import CreatePPT from './pages/CreatePPT'
 import Templates from './pages/Templates'
