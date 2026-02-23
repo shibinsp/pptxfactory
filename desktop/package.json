@@ -1,40 +1,147 @@
 {
   "name": "ppt-saas-desktop",
-  "version": "1.0.0",
-  "description": "PPT SaaS Desktop Application",
+  "version": "2.0.0",
+  "description": "PPT SaaS Desktop - AI-Powered Presentation Generator",
   "main": "main.js",
+  "author": "PPT SaaS Team",
+  "license": "MIT",
+  "homepage": "https://github.com/shibinsp/pptxfactory",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/shibinsp/pptxfactory.git"
+  },
   "scripts": {
     "start": "electron .",
-    "build": "electron-builder",
-    "build:win": "electron-builder --win",
-    "build:mac": "electron-builder --mac",
-    "build:linux": "electron-builder --linux"
+    "dev": "NODE_ENV=development electron .",
+    "build": "npm run build:frontend && electron-builder",
+    "build:frontend": "cd ../frontend && npm run build",
+    "build:all": "npm run build:frontend && electron-builder -mwl",
+    "build:win": "npm run build:frontend && electron-builder --win",
+    "build:mac": "npm run build:frontend && electron-builder --mac",
+    "build:linux": "npm run build:frontend && electron-builder --linux",
+    "pack": "electron-builder --dir",
+    "dist": "npm run build:frontend && electron-builder",
+    "postinstall": "electron-builder install-app-deps",
+    "release": "npm run build:frontend && electron-builder --publish=always"
   },
   "dependencies": {
-    "electron": "^28.0.0"
+    "electron-updater": "^6.1.7",
+    "electron-log": "^5.0.1"
   },
   "devDependencies": {
-    "electron-builder": "^24.0.0"
+    "electron": "^28.0.0",
+    "electron-builder": "^24.9.1"
   },
   "build": {
-    "appId": "com.pptsaas.app",
+    "appId": "com.pptsaas.desktop",
     "productName": "PPT SaaS",
+    "copyright": "Copyright © 2024 PPT SaaS",
+    "asar": true,
+    "asarUnpack": [
+      "**/*.node"
+    ],
     "directories": {
-      "output": "dist"
+      "output": "release",
+      "buildResources": "build"
     },
     "files": [
       "main.js",
       "preload.js",
-      "../frontend/dist/**/*"
+      "updater.js",
+      "../frontend/dist/**/*",
+      "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}",
+      "!**/node_modules/*/{test,__tests__,tests,powered-test,example,examples}",
+      "!**/node_modules/*.d.ts",
+      "!**/node_modules/.bin",
+      "!**/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}",
+      "!.editorconfig",
+      "!**/._*",
+      "!**/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}",
+      "!**/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}",
+      "!**/{appveyor.yml,.travis.yml,circle.yml}",
+      "!**/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}"
+    ],
+    "extraResources": [
+      {
+        "from": "../backend",
+        "to": "backend",
+        "filter": ["**/*", "!venv/**", "!__pycache__/**", "!*.pyc"]
+      }
     ],
     "mac": {
-      "target": "dmg"
+      "target": [
+        {
+          "target": "dmg",
+          "arch": ["x64", "arm64"]
+        },
+        {
+          "target": "zip",
+          "arch": ["x64", "arm64"]
+        }
+      ],
+      "category": "public.app-category.productivity"
     },
     "win": {
-      "target": "nsis"
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64", "ia32"]
+        },
+        {
+          "target": "portable",
+          "arch": ["x64"]
+        }
+      ],
+      "publisherName": "PPT SaaS Team"
     },
     "linux": {
-      "target": "AppImage"
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": ["x64"]
+        },
+        {
+          "target": "deb",
+          "arch": ["x64"]
+        }
+      ],
+      "category": "Office",
+      "maintainer": "PPT SaaS Team",
+      "vendor": "PPT SaaS",
+      "synopsis": "AI-Powered Presentation Generator",
+      "description": "Create stunning presentations with AI. Features chat-based editing, 58+ templates, and document upload."
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "PPT SaaS",
+      "license": "../LICENSE"
+    },
+    "dmg": {
+      "contents": [
+        {
+          "x": 130,
+          "y": 220
+        },
+        {
+          "x": 410,
+          "y": 220,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ],
+      "window": {
+        "width": 540,
+        "height": 380
+      }
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "shibinsp",
+      "repo": "pptxfactory",
+      "releaseType": "release"
     }
   }
 }

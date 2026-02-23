@@ -34,3 +34,5 @@ outputs/
 # Templates - allow base templates but not uploaded user templates
 backend/templates/*.json
 # Note: UUID template files are allowed, only user uploads with timestamps are ignoredfrontend/.vite/
+desktop/release/
+desktop/node_modules/
