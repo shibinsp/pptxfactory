@@ -1,8 +1,34 @@
 {
-  "name": "ppt-saas-frontend",
+  "name": "pptxfactory",
   "version": "2.0.0",
+  "description": "AI-powered presentation generator — create stunning PowerPoint files with React",
   "type": "module",
   "homepage": "https://shibinsp.github.io/pptxfactory/",
+  "license": "MIT",
+  "author": "shibinsp",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/shibinsp/pptxfactory.git"
+  },
+  "bugs": {
+    "url": "https://github.com/shibinsp/pptxfactory/issues"
+  },
+  "keywords": [
+    "pptx",
+    "powerpoint",
+    "presentation",
+    "ai",
+    "react",
+    "slides",
+    "generator"
+  ],
+  "files": [
+    "dist/",
+    "src/",
+    "public/",
+    "vite.config.js",
+    "index.html"
+  ],
   "scripts": {
     "dev": "vite",
     "build": "vite build",
