@@ -18,9 +18,11 @@ import {
   Undo,
   Redo,
   Copy,
-  Sparkles
+  Sparkles,
+  MonitorPlay
 } from 'lucide-react'
 import PreviewModal from './PreviewModal'
+import PowerPointRibbon from './PowerPointRibbon'
 
 const API_URL = 'http://localhost:8000'
 
@@ -290,49 +292,30 @@ function SlideEditor({ pptId, onClose, onSave }) {
 
   return (
     <div className="editor-container animate-fadeIn">
-      {/* Toolbar */}
-      <div className="editor-toolbar">
-        <div className="toolbar-left">
-          <button 
-            className="toolbar-btn" 
-            onClick={undo}
-            disabled={historyIndex <= 0}
-            title="Undo"
-          >
-            <Undo size={18} />
-          </button>
-          <button 
-            className="toolbar-btn" 
-            onClick={redo}
-            disabled={historyIndex >= history.length - 1}
-            title="Redo"
-          >
-            <Redo size={18} />
-          </button>
-          <div className="toolbar-divider"></div>
-          <button 
-            className="toolbar-btn" 
-            onClick={() => setShowPreviewModal(true)}
-            title="Preview Presentation"
-          >
-            <Eye size={18} />
-            <span>Preview</span>
-          </button>
-        </div>
-        <div className="toolbar-center">
-          <span className="ppt-title">{ppt.title}</span>
-          <span className="slide-count">{ppt.slides.length} slides</span>
-        </div>
-        <div className="toolbar-right">
-          <button 
-            className="toolbar-btn" 
-            onClick={onClose}
-            title="Close Editor"
-          >
-            <X size={18} />
-          </button>
-        </div>
-      </div>
+      {/* PowerPoint-style Ribbon */}
+      <PowerPointRibbon
+        ppt={ppt}
+        onSave={savePPT}
+        onDownload={downloadPPT}
+        onPreview={() => setShowPreviewModal(true)}
+        onClose={onClose}
+        onUndo={undo}
+        onRedo={redo}
+        canUndo={historyIndex > 0}
+        canRedo={historyIndex < history.length - 1}
+        selectedSlide={selectedSlide}
+        onAddSlide={addSlide}
+        onDeleteSlide={() => selectedSlide && deleteSlide(selectedSlide.id)}
+        onDuplicateSlide={() => selectedSlide && duplicateSlide(selectedSlide.id)}
+        onUpdateSlide={updateSlide}
+        onShowImageSearch={() => setShowImageSearch(true)}
+        onGenerateAIImage={generateAIImage}
+        onInsertChart={() => alert('Chart insertion - Coming soon!')}
+        onInsertTable={() => alert('Table insertion - Coming soon!')}
+        onInsertShape={() => alert('Shape insertion - Coming soon!')}
+        onInsertVideo={() => alert('Video insertion - Coming soon!')}
+        onChangeTemplate={() => alert('Template change - Coming soon!')}
+      />
 
       {/* Left Sidebar - Slide Thumbnails */}
       <div className="editor-sidebar">
