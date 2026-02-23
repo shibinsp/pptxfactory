@@ -45,17 +45,77 @@ MISTRAL_API_KEY = "sztcTEpBuK6tjxaWkkvXjp7sUQgofXAd"
 mistral_client = Mistral(api_key=MISTRAL_API_KEY)
 
 # Built-in template IDs (these cannot be deleted)
+# Auto-generated from templates_data.py - 58 unique templates
 BUILTIN_TEMPLATE_NAMES = [
+    # Business (8)
     "business_professional.pptx",
-    "modern_dark.pptx", 
-    "minimalist.pptx",
-    "nature_green.pptx",
+    "executive_dark.pptx",
+    "corporate_blue.pptx",
+    "minimalist_white.pptx",
+    "consulting_modern.pptx",
+    "financial_sleek.pptx",
+    "law_firm_elegant.pptx",
+    "tech_startup.pptx",
+    # Creative (8)
     "creative_purple.pptx",
-    "sunset_orange.pptx",
-    "ocean_blue.pptx",
-    "executive_gold.pptx",
-    "startup_modern.pptx",
-    "healthcare_medical.pptx"
+    "artistic_gradient.pptx",
+    "bold_typography.pptx",
+    "portfolio_showcase.pptx",
+    "neon_cyber.pptx",
+    "watercolor_dream.pptx",
+    "geometric_bold.pptx",
+    "vintage_retro.pptx",
+    # Nature (6)
+    "nature_green.pptx",
+    "ocean_breeze.pptx",
+    "sunset_warmth.pptx",
+    "forest_earth.pptx",
+    "tropical_paradise.pptx",
+    "mountain_peak.pptx",
+    # Technology (6)
+    "tech_dark.pptx",
+    "ai_future.pptx",
+    "blockchain_crypto.pptx",
+    "data_science.pptx",
+    "cyber_security.pptx",
+    "cloud_computing.pptx",
+    # Education (5)
+    "academic_classic.pptx",
+    "modern_education.pptx",
+    "science_lab.pptx",
+    "university_lecture.pptx",
+    "kids_learning.pptx",
+    # Healthcare (4)
+    "healthcare_medical.pptx",
+    "pharma_clean.pptx",
+    "wellness_spa.pptx",
+    "mental_health.pptx",
+    # Lifestyle (4)
+    "fashion_glamour.pptx",
+    "food_culinary.pptx",
+    "travel_adventure.pptx",
+    "wedding_romance.pptx",
+    # Events (4)
+    "christmas_holiday.pptx",
+    "new_year_celebration.pptx",
+    "birthday_party.pptx",
+    "corporate_event.pptx",
+    # Industry (5)
+    "real_estate.pptx",
+    "restaurant_hospitality.pptx",
+    "sports_energy.pptx",
+    "nonprofit_social.pptx",
+    "construction_industrial.pptx",
+    # Seasonal (4)
+    "spring_bloom.pptx",
+    "summer_vibes.pptx",
+    "autumn_harvest.pptx",
+    "winter_frost.pptx",
+    # Special (4)
+    "monochrome_elegant.pptx",
+    "gradient_mesh.pptx",
+    "paper_craft.pptx",
+    "glass_morphism.pptx",
 ]
 
 # Models
