@@ -251,12 +251,22 @@ def generate_ppt_from_template(request: PPTRequest, template_path: str = None, o
             tf.text = slide_data.content
         
         # Add image if provided
-        if slide_data.image_url and os.path.exists(slide_data.image_url):
+        if slide_data.image_url:
             try:
-                left = Inches(8.5)
-                top = Inches(1.5)
-                height = Inches(4)
-                slide.shapes.add_picture(slide_data.image_url, left, top, height=height)
+                image_path = slide_data.image_url
+                
+                # If it's a URL, download it first
+                if image_path.startswith('http'):
+                    downloaded_path = download_image(image_path, slide_data.id or str(uuid.uuid4()))
+                    if downloaded_path:
+                        image_path = downloaded_path
+                
+                # Check if image file exists locally
+                if os.path.exists(image_path):
+                    left = Inches(8.5)
+                    top = Inches(1.5)
+                    height = Inches(4)
+                    slide.shapes.add_picture(image_path, left, top, height=height)
             except Exception as e:
                 print(f"Error adding image: {e}")
     
@@ -304,11 +314,31 @@ def search_unsplash_image(query: str):
         return None
 
 def download_image(url: str, slide_id: str):
-    """Download image from URL"""
+    """Download image from URL or copy local file"""
     try:
+        # If it's a local file path that exists, copy it to images directory
+        if os.path.exists(url):
+            import shutil
+            ext = os.path.splitext(url)[1] or '.jpg'
+            image_path = os.path.join(IMAGES_DIR, f"{slide_id}{ext}")
+            shutil.copy2(url, image_path)
+            return image_path
+        
+        # Otherwise, download from URL
         response = requests.get(url, timeout=10)
         if response.status_code == 200:
-            image_path = os.path.join(IMAGES_DIR, f"{slide_id}.jpg")
+            # Determine extension from content-type
+            content_type = response.headers.get('content-type', '')
+            if 'png' in content_type:
+                ext = '.png'
+            elif 'gif' in content_type:
+                ext = '.gif'
+            elif 'webp' in content_type:
+                ext = '.webp'
+            else:
+                ext = '.jpg'
+            
+            image_path = os.path.join(IMAGES_DIR, f"{slide_id}{ext}")
             with open(image_path, "wb") as f:
                 f.write(response.content)
             return image_path
