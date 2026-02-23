@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom'
 import Home from './pages/Home'
 import CreatePPT from './pages/CreatePPT'
@@ -6,6 +6,7 @@ import Templates from './pages/Templates'
 import AIGenerate from './pages/AIGenerate'
 import HistoryPage from './pages/History'
 import LandingPage from './pages/LandingPage'
+import ChatAgent from './components/ChatAgent'
 import './index.css'
 
 function NavLink({ to, children }) {
@@ -37,6 +38,15 @@ function Navigation() {
 }
 
 function App() {
+  const [currentPpt, setCurrentPpt] = useState(null)
+  const [currentSlide, setCurrentSlide] = useState(null)
+
+  const handleChatAction = (actionType, actionData) => {
+    console.log('Chat action:', actionType, actionData)
+    // Handle chat actions - this would integrate with your editor
+    // For now, we'll just log them
+  }
+
   return (
     <Router>
       <div className="app">
@@ -60,6 +70,13 @@ function App() {
             <Route path="/history" element={<HistoryPage />} />
           </Routes>
         </main>
+
+        {/* AI Chat Agent - Available on all pages */}
+        <ChatAgent 
+          pptId={currentPpt?.id}
+          currentSlide={currentSlide}
+          onAction={handleChatAction}
+        />
       </div>
     </Router>
   )

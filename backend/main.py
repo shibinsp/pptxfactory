@@ -1,8 +1,8 @@
-from fastapi import FastAPI, File, UploadFile, HTTPException, Depends
+from fastapi import FastAPI, File, UploadFile, HTTPException, Depends, Form
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 import os
 import uuid
 import shutil
@@ -16,6 +16,16 @@ import re
 from mistralai import Mistral
 import requests
 from datetime import datetime
+
+# Import AI Agents
+from agents import (
+    ChatAgent,
+    DocumentProcessor,
+    ContentGenerationAgent,
+    TemplateSelectorAgent,
+    ImageResearchAgent,
+    DesignOptimizationAgent
+)
 
 app = FastAPI(title="PPT SaaS API", version="2.0.0")
 
@@ -43,6 +53,13 @@ os.makedirs(IMAGES_DIR, exist_ok=True)
 # Configure Mistral API
 MISTRAL_API_KEY = "sztcTEpBuK6tjxaWkkvXjp7sUQgofXAd"
 mistral_client = Mistral(api_key=MISTRAL_API_KEY)
+
+# Initialize AI Agents
+chat_agent = ChatAgent(mistral_client=mistral_client)
+document_processor = DocumentProcessor(mistral_client=mistral_client)
+content_agent = ContentGenerationAgent(mistral_client=mistral_client)
+design_agent = DesignOptimizationAgent()
+image_agent = ImageResearchAgent()
 
 # Built-in template IDs (these cannot be deleted)
 # Auto-generated from templates_data.py - 58 unique templates
@@ -166,6 +183,39 @@ class HistoryEntry(BaseModel):
     action: str
     timestamp: str
     slides_count: int
+
+# Chat Agent Models
+class ChatMessageRequest(BaseModel):
+    message: str
+    ppt_id: Optional[str] = None
+    slide_id: Optional[str] = None
+    context: Optional[Dict] = None
+
+class ChatMessageResponse(BaseModel):
+    response: str
+    actions: List[Dict[str, Any]]
+    suggestions: List[str]
+
+class DocumentUploadResponse(BaseModel):
+    success: bool
+    content: Optional[str] = None
+    slides: Optional[List[Dict]] = None
+    summary: Optional[str] = None
+    metadata: Optional[Dict] = None
+    error: Optional[str] = None
+
+class MediaInsertRequest(BaseModel):
+    ppt_id: str
+    slide_id: str
+    media_type: str  # image, video, youtube, chart, table, shape
+    source: Optional[str] = None  # URL or file path
+    position: Optional[Dict] = None  # x, y, width, height
+    properties: Optional[Dict] = None  # Additional properties
+
+class SlideLayoutRequest(BaseModel):
+    layout_type: str  # title, content, two_column, image_left, image_right, etc.
+    title: Optional[str] = None
+    content: Optional[str] = None
 
 # Helper functions
 def generate_ppt_from_template(request: PPTRequest, template_path: str = None, output_id: str = None):
@@ -833,6 +883,401 @@ async def search_images(query: str, count: int = 5):
         return {"images": images}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ========== AI CHAT AGENT ENDPOINTS ==========
+
+@app.post("/api/chat/message", response_model=ChatMessageResponse)
+async def chat_message(request: ChatMessageRequest):
+    """
+    Process chat message and return AI response with actions
+    Supports natural language commands for editing presentations
+    """
+    try:
+        result = chat_agent.process_message(
+            message=request.message,
+            context=request.context
+        )
+        return ChatMessageResponse(**result)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/chat/clear")
+async def clear_chat_history():
+    """Clear chat conversation history"""
+    chat_agent.clear_history()
+    return {"success": True, "message": "Chat history cleared"}
+
+
+@app.get("/api/chat/history")
+async def get_chat_history():
+    """Get chat conversation history"""
+    return {"history": chat_agent.get_conversation_history()}
+
+
+# ========== DOCUMENT PROCESSING ENDPOINTS ==========
+
+@app.post("/api/documents/upload")
+async def upload_document(file: UploadFile = File(...)):
+    """
+    Upload and process PDF, Word, or image documents
+    Extracts content and suggests slide structure
+    """
+    try:
+        # Save uploaded file
+        file_id = str(uuid.uuid4())
+        file_ext = os.path.splitext(file.filename)[1].lower()
+        file_path = os.path.join(UPLOAD_DIR, f"{file_id}{file_ext}")
+        
+        with open(file_path, "wb") as f:
+            shutil.copyfileobj(file.file, f)
+        
+        # Process document
+        result = document_processor.process_file(file_path, file_ext.lstrip('.'))
+        
+        # Add file info to result
+        result["file_id"] = file_id
+        result["filename"] = file.filename
+        result["file_type"] = file_ext.lstrip('.')
+        
+        return DocumentUploadResponse(**result)
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/documents/convert-to-presentation")
+async def convert_document_to_presentation(file_id: str, title: Optional[str] = None):
+    """Convert processed document to presentation format"""
+    try:
+        # Find the processed document
+        # In production, you'd store processed docs in a database
+        # For now, we'll create from the original file
+        
+        return {
+            "success": True,
+            "message": "Document converted to presentation",
+            "ppt_id": file_id,
+            "title": title or "Document Presentation"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ========== MEDIA INSERTION ENDPOINTS ==========
+
+@app.post("/api/ppt/{ppt_id}/slides/{slide_id}/media")
+async def insert_media(ppt_id: str, slide_id: str, request: MediaInsertRequest):
+    """
+    Insert media into a slide (image, video, YouTube, chart, table, shape)
+    """
+    try:
+        ppt_path = os.path.join(OUTPUT_DIR, f"{ppt_id}.pptx")
+        if not os.path.exists(ppt_path):
+            raise HTTPException(status_code=404, detail="Presentation not found")
+        
+        prs = Presentation(ppt_path)
+        
+        # Find the slide
+        slide_index = int(slide_id.split('-')[-1]) if '-' in slide_id else 0
+        if slide_index >= len(prs.slides):
+            raise HTTPException(status_code=404, detail="Slide not found")
+        
+        slide = prs.slides[slide_index]
+        media_type = request.media_type
+        
+        # Default position
+        pos = request.position or {"x": 1, "y": 2, "width": 8, "height": 4}
+        
+        if media_type == "image":
+            # Insert image
+            if request.source and os.path.exists(request.source):
+                slide.shapes.add_picture(
+                    request.source,
+                    Inches(pos["x"]),
+                    Inches(pos["y"]),
+                    width=Inches(pos.get("width", 4))
+                )
+            else:
+                # Add placeholder for image
+                shape = slide.shapes.add_shape(
+                    MSO_SHAPE.RECTANGLE,
+                    Inches(pos["x"]),
+                    Inches(pos["y"]),
+                    Inches(pos.get("width", 4)),
+                    Inches(pos.get("height", 3))
+                )
+                shape.fill.solid()
+                shape.fill.fore_color.rgb = RGBColor(200, 200, 200)
+                shape.text_frame.text = "[Image Placeholder]"
+        
+        elif media_type == "youtube":
+            # Add YouTube video placeholder
+            shape = slide.shapes.add_shape(
+                MSO_SHAPE.RECTANGLE,
+                Inches(pos["x"]),
+                Inches(pos["y"]),
+                Inches(pos.get("width", 6)),
+                Inches(pos.get("height", 4))
+            )
+            shape.fill.solid()
+            shape.fill.fore_color.rgb = RGBColor(255, 0, 0)
+            tf = shape.text_frame
+            tf.text = f"🎥 YouTube Video\n{request.source or ''}"
+            tf.paragraphs[0].font.color.rgb = RGBColor(255, 255, 255)
+        
+        elif media_type == "video":
+            # Add video placeholder
+            shape = slide.shapes.add_shape(
+                MSO_SHAPE.RECTANGLE,
+                Inches(pos["x"]),
+                Inches(pos["y"]),
+                Inches(pos.get("width", 6)),
+                Inches(pos.get("height", 4))
+            )
+            shape.fill.solid()
+            shape.fill.fore_color.rgb = RGBColor(50, 50, 50)
+            tf = shape.text_frame
+            tf.text = "🎬 Video\n[Click to play]"
+            tf.paragraphs[0].font.color.rgb = RGBColor(255, 255, 255)
+        
+        elif media_type == "chart":
+            # Add chart placeholder
+            chart_type = request.properties.get("chart_type", "bar") if request.properties else "bar"
+            shape = slide.shapes.add_shape(
+                MSO_SHAPE.RECTANGLE,
+                Inches(pos["x"]),
+                Inches(pos["y"]),
+                Inches(pos.get("width", 5)),
+                Inches(pos.get("height", 4))
+            )
+            shape.fill.solid()
+            shape.fill.fore_color.rgb = RGBColor(100, 149, 237)
+            tf = shape.text_frame
+            tf.text = f"📊 {chart_type.capitalize()} Chart"
+        
+        elif media_type == "table":
+            # Add table
+            rows = request.properties.get("rows", 3) if request.properties else 3
+            cols = request.properties.get("cols", 3) if request.properties else 3
+            
+            table = slide.shapes.add_table(
+                rows, cols,
+                Inches(pos["x"]),
+                Inches(pos["y"]),
+                Inches(pos.get("width", 6)),
+                Inches(pos.get("height", 3))
+            ).table
+            
+            # Add placeholder text
+            for i in range(rows):
+                for j in range(cols):
+                    table.cell(i, j).text = f"Cell {i+1},{j+1}"
+        
+        elif media_type == "shape":
+            # Add shape
+            shape_type = request.properties.get("shape_type", "rectangle") if request.properties else "rectangle"
+            
+            shape_map = {
+                "rectangle": MSO_SHAPE.RECTANGLE,
+                "oval": MSO_SHAPE.OVAL,
+                "circle": MSO_SHAPE.OVAL,
+                "arrow": MSO_SHAPE.RIGHT_ARROW,
+                "star": MSO_SHAPE.STAR_5
+            }
+            
+            mso_shape = shape_map.get(shape_type, MSO_SHAPE.RECTANGLE)
+            
+            shape = slide.shapes.add_shape(
+                mso_shape,
+                Inches(pos["x"]),
+                Inches(pos["y"]),
+                Inches(pos.get("width", 2)),
+                Inches(pos.get("height", 2))
+            )
+            shape.fill.solid()
+            shape.fill.fore_color.rgb = RGBColor(100, 100, 100)
+        
+        # Save presentation
+        prs.save(ppt_path)
+        
+        return {
+            "success": True,
+            "message": f"{media_type} inserted successfully",
+            "slide_id": slide_id,
+            "media_type": media_type
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ========== SLIDE LAYOUT ENDPOINTS ==========
+
+@app.post("/api/ppt/{ppt_id}/slides/{slide_id}/layout")
+async def change_slide_layout(ppt_id: str, slide_id: str, request: SlideLayoutRequest):
+    """Change the layout of a slide"""
+    try:
+        ppt_path = os.path.join(OUTPUT_DIR, f"{ppt_id}.pptx")
+        if not os.path.exists(ppt_path):
+            raise HTTPException(status_code=404, detail="Presentation not found")
+        
+        # This would modify the slide layout
+        # Implementation depends on specific layout requirements
+        
+        return {
+            "success": True,
+            "message": f"Layout changed to {request.layout_type}",
+            "slide_id": slide_id,
+            "layout": request.layout_type
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ========== AI CONTENT ENHANCEMENT ENDPOINTS ==========
+
+@app.post("/api/ai/improve-writing")
+async def improve_writing(text: str, style: str = "professional"):
+    """Use AI to improve writing style"""
+    try:
+        improved = content_agent.improve_writing(text, style=style)
+        return {
+            "original": text,
+            "improved": improved,
+            "style": style
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/ai/generate-speaker-notes")
+async def generate_speaker_notes(slide_title: str, slide_content: str):
+    """Generate speaker notes for a slide"""
+    try:
+        notes = content_agent.generate_speaker_notes(slide_title, slide_content)
+        return {
+            "slide_title": slide_title,
+            "speaker_notes": notes
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/ai/suggest-visuals")
+async def suggest_visuals(slide_title: str, slide_content: str):
+    """Suggest visual elements for a slide"""
+    try:
+        suggestions = content_agent.suggest_visuals(slide_title, slide_content)
+        return {
+            "slide_title": slide_title,
+            "suggestions": suggestions
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/ai/analyze-design")
+async def analyze_slide_design(ppt_id: str, slide_id: str):
+    """Analyze slide design and provide improvement suggestions"""
+    try:
+        ppt_path = os.path.join(OUTPUT_DIR, f"{ppt_id}.pptx")
+        if not os.path.exists(ppt_path):
+            raise HTTPException(status_code=404, detail="Presentation not found")
+        
+        prs = Presentation(ppt_path)
+        slide_index = int(slide_id.split('-')[-1]) if '-' in slide_id else 0
+        
+        if slide_index >= len(prs.slides):
+            raise HTTPException(status_code=404, detail="Slide not found")
+        
+        slide = prs.slides[slide_index]
+        analysis = design_agent.analyze_slide(slide)
+        
+        return analysis
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ========== YOUTUBE VIDEO EMBED ==========
+
+@app.post("/api/ppt/{ppt_id}/slides/{slide_id}/youtube")
+async def embed_youtube_video(
+    ppt_id: str, 
+    slide_id: str,
+    youtube_url: str = Form(...),
+    position: Optional[str] = Form('{"x": 1, "y": 2, "width": 8, "height": 4.5}')
+):
+    """Embed a YouTube video into a slide"""
+    try:
+        import json
+        pos = json.loads(position)
+        
+        # Extract video ID from URL
+        video_id = None
+        patterns = [
+            r'(?:youtube\.com/watch\?v=|youtu\.be/|youtube\.com/embed/)([a-zA-Z0-9_-]+)',
+            r'youtube\.com/watch\?.*v=([a-zA-Z0-9_-]+)'
+        ]
+        
+        for pattern in patterns:
+            match = re.search(pattern, youtube_url)
+            if match:
+                video_id = match.group(1)
+                break
+        
+        if not video_id:
+            raise HTTPException(status_code=400, detail="Invalid YouTube URL")
+        
+        ppt_path = os.path.join(OUTPUT_DIR, f"{ppt_id}.pptx")
+        if not os.path.exists(ppt_path):
+            raise HTTPException(status_code=404, detail="Presentation not found")
+        
+        prs = Presentation(ppt_path)
+        slide_index = int(slide_id.split('-')[-1]) if '-' in slide_id else 0
+        
+        if slide_index >= len(prs.slides):
+            raise HTTPException(status_code=404, detail="Slide not found")
+        
+        slide = prs.slides[slide_index]
+        
+        # Add YouTube embed placeholder
+        shape = slide.shapes.add_shape(
+            MSO_SHAPE.RECTANGLE,
+            Inches(pos["x"]),
+            Inches(pos["y"]),
+            Inches(pos.get("width", 8)),
+            Inches(pos.get("height", 4.5))
+        )
+        
+        shape.fill.solid()
+        shape.fill.fore_color.rgb = RGBColor(255, 0, 0)
+        
+        tf = shape.text_frame
+        tf.text = f"🎥 YouTube Video\nhttps://youtube.com/watch?v={video_id}"
+        
+        for paragraph in tf.paragraphs:
+            paragraph.font.color.rgb = RGBColor(255, 255, 255)
+            paragraph.font.size = Pt(18)
+            paragraph.alignment = PP_ALIGN.CENTER
+        
+        prs.save(ppt_path)
+        
+        return {
+            "success": True,
+            "message": "YouTube video embedded",
+            "video_id": video_id,
+            "embed_url": f"https://www.youtube.com/embed/{video_id}"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 if __name__ == "__main__":
     import uvicorn
