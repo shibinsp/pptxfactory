@@ -154,7 +154,7 @@ function AIGenerate() {
           alignItems: 'center',
           justifyContent: 'center'
         }}>
-          <img src="/logo.png" alt="Bee" style={{ width: '48px', height: '48px', borderRadius: '10px' }} />
+          <img src="./logo.png" alt="Bee" style={{ width: '48px', height: '48px', borderRadius: '10px' }} />
         </div>
         
         <h2 style={{ fontFamily: 'Poppins, sans-serif', fontSize: '2rem', marginBottom: '0.875rem' }}>

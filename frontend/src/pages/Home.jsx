@@ -35,7 +35,7 @@ function Home() {
             padding: '0.5rem 1.25rem',
             marginBottom: '1.75rem'
           }}>
-            <img src="/logo.png" alt="Bee" style={{ width: '20px', height: '20px', borderRadius: '4px' }} />
+            <img src="./logo.png" alt="Bee" style={{ width: '20px', height: '20px', borderRadius: '4px' }} />
             <span style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
               Powered by Mistral AI
             </span>
@@ -218,7 +218,7 @@ function Home() {
         textAlign: 'center',
         background: 'var(--gradient-glow)'
       }}>
-        <img src="/logo.png" alt="Bee" style={{ width: '64px', height: '64px', borderRadius: '16px', marginBottom: '1rem' }} />
+        <img src="./logo.png" alt="Bee" style={{ width: '64px', height: '64px', borderRadius: '16px', marginBottom: '1rem' }} />
         <h2 style={{ fontFamily: 'Poppins, sans-serif', marginBottom: '0.75rem', fontSize: '1.5rem' }}>
           Ready to Create Your Presentation?
         </h2>

@@ -53,7 +53,7 @@ function App() {
         <header className="header">
           <Link to="/" style={{ textDecoration: 'none' }}>
             <div className="logo-container">
-              <img src="/logo.png" alt="PPT SaaS Logo" />
+              <img src="./logo.png" alt="PPT SaaS Logo" />
               <span className="logo-text">PPT SaaS</span>
             </div>
           </Link>

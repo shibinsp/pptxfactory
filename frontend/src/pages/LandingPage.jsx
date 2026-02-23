@@ -24,7 +24,7 @@ function LandingPage() {
       <nav className="landing-nav">
         <div className="landing-nav-container">
           <Link to="/" className="landing-logo">
-            <img src="/logo.png" alt="PPT SaaS" />
+            <img src="./logo.png" alt="PPT SaaS" />
             <span>PPT SaaS</span>
           </Link>
           <div className="landing-nav-links">
@@ -323,7 +323,7 @@ function LandingPage() {
         <div className="landing-footer-container">
           <div className="landing-footer-brand">
             <Link to="/" className="landing-logo">
-              <img src="/logo.png" alt="PPT SaaS" />
+              <img src="./logo.png" alt="PPT SaaS" />
               <span>PPT SaaS</span>
             </Link>
             <p>AI-powered presentation creation for everyone.</p>
