@@ -233,6 +233,334 @@ function TemplatePreviewModal({ template, onClose, onUse }) {
   const goToPrevious = () => goToSlide(currentSlideIndex - 1)
   const goToNext = () => goToSlide(currentSlideIndex + 1)
 
+  // Render slide content with design elements based on layout
+  const renderSlideContent = () => {
+    const layout = currentSlide.layout
+    
+    // Title slide layouts
+    if (layout.includes('title')) {
+      return (
+        <div style={{ 
+          display: 'flex', 
+          flexDirection: 'column', 
+          alignItems: 'center', 
+          justifyContent: 'center',
+          height: '100%',
+          textAlign: 'center',
+          padding: '2rem'
+        }}>
+          <div style={{
+            width: '80px',
+            height: '4px',
+            background: themeColor,
+            marginBottom: '2rem',
+            borderRadius: '2px'
+          }} />
+          <h2 style={{
+            fontSize: '2.5rem',
+            fontWeight: 800,
+            color: currentSlide.textColor,
+            marginBottom: '1.5rem',
+            lineHeight: 1.2
+          }}>
+            {currentSlide.title}
+          </h2>
+          <p style={{
+            fontSize: '1.25rem',
+            color: currentSlide.textColor,
+            opacity: 0.8,
+            lineHeight: 1.6,
+            whiteSpace: 'pre-line'
+          }}>
+            {currentSlide.content}
+          </p>
+          <div style={{
+            width: '60px',
+            height: '60px',
+            borderRadius: '50%',
+            background: `${themeColor}20`,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginTop: '2rem',
+            border: `2px solid ${themeColor}`
+          }}>
+            <div style={{
+              width: '20px',
+              height: '20px',
+              background: themeColor,
+              borderRadius: '50%'
+            }} />
+          </div>
+        </div>
+      )
+    }
+    
+    // List/Content layouts
+    if (layout.includes('list') || layout.includes('summary') || layout.includes('features')) {
+      const lines = currentSlide.content.split('\n')
+      return (
+        <div style={{ padding: '1rem 0' }}>
+          <h2 style={{
+            fontSize: '1.75rem',
+            fontWeight: 700,
+            color: currentSlide.textColor,
+            marginBottom: '1.5rem',
+            paddingBottom: '0.75rem',
+            borderBottom: `3px solid ${themeColor}`,
+            display: 'inline-block'
+          }}>
+            {currentSlide.title}
+          </h2>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            {lines.map((line, i) => (
+              <div key={i} style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '1rem',
+                padding: '0.75rem 1rem',
+                background: i % 2 === 0 ? `${themeColor}10` : 'transparent',
+                borderRadius: '8px',
+                borderLeft: `4px solid ${themeColor}`
+              }}>
+                <div style={{
+                  width: '28px',
+                  height: '28px',
+                  borderRadius: '50%',
+                  background: themeColor,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#fff',
+                  fontSize: '0.85rem',
+                  fontWeight: 700,
+                  flexShrink: 0
+                }}>
+                  {i + 1}
+                </div>
+                <span style={{
+                  fontSize: '1rem',
+                  color: currentSlide.textColor,
+                  fontWeight: 500
+                }}>
+                  {line.replace('• ', '')}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )
+    }
+    
+    // Chart/Data layouts
+    if (layout.includes('chart') || layout.includes('stats') || layout.includes('metrics')) {
+      return (
+        <div style={{ padding: '1rem 0' }}>
+          <h2 style={{
+            fontSize: '1.75rem',
+            fontWeight: 700,
+            color: currentSlide.textColor,
+            marginBottom: '1.5rem'
+          }}>
+            {currentSlide.title}
+          </h2>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(2, 1fr)',
+            gap: '1.5rem',
+            marginTop: '2rem'
+          }}>
+            <div style={{
+              background: `${themeColor}15`,
+              padding: '1.5rem',
+              borderRadius: '12px',
+              textAlign: 'center',
+              border: `2px solid ${themeColor}30`
+            }}>
+              <div style={{
+                fontSize: '2.5rem',
+                fontWeight: 800,
+                color: themeColor,
+                marginBottom: '0.5rem'
+              }}>85%</div>
+              <div style={{ color: currentSlide.textColor, fontSize: '0.9rem' }}>Performance</div>
+            </div>
+            <div style={{
+              background: `${themeColor}15`,
+              padding: '1.5rem',
+              borderRadius: '12px',
+              textAlign: 'center',
+              border: `2px solid ${themeColor}30`
+            }}>
+              <div style={{
+                fontSize: '2.5rem',
+                fontWeight: 800,
+                color: themeColor,
+                marginBottom: '0.5rem'
+              }}>+42%</div>
+              <div style={{ color: currentSlide.textColor, fontSize: '0.9rem' }}>Growth</div>
+            </div>
+          </div>
+          <p style={{
+            marginTop: '2rem',
+            textAlign: 'center',
+            color: currentSlide.textColor,
+            fontSize: '1.1rem',
+            lineHeight: 1.6,
+            whiteSpace: 'pre-line'
+          }}>
+            {currentSlide.content}
+          </p>
+        </div>
+      )
+    }
+    
+    // Team/People layouts
+    if (layout.includes('team') || layout.includes('users') || layout.includes('doctors')) {
+      return (
+        <div style={{ padding: '1rem 0' }}>
+          <h2 style={{
+            fontSize: '1.75rem',
+            fontWeight: 700,
+            color: currentSlide.textColor,
+            marginBottom: '1.5rem'
+          }}>
+            {currentSlide.title}
+          </h2>
+          <div style={{
+            display: 'flex',
+            gap: '1rem',
+            justifyContent: 'center',
+            marginTop: '2rem'
+          }}>
+            {[1, 2, 3].map((i) => (
+              <div key={i} style={{
+                width: '80px',
+                height: '80px',
+                borderRadius: '50%',
+                background: `linear-gradient(135deg, ${themeColor}, ${themeColor}80)`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                border: `3px solid ${themeColor}`
+              }}>
+                <Users size={32} color="#fff" />
+              </div>
+            ))}
+          </div>
+          <p style={{
+            marginTop: '2rem',
+            textAlign: 'center',
+            color: currentSlide.textColor,
+            fontSize: '1.1rem',
+            lineHeight: 1.6,
+            whiteSpace: 'pre-line'
+          }}>
+            {currentSlide.content}
+          </p>
+        </div>
+      )
+    }
+    
+    // CTA layouts
+    if (layout.includes('cta')) {
+      return (
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: '100%',
+          textAlign: 'center',
+          padding: '2rem'
+        }}>
+          <div style={{
+            width: '100px',
+            height: '100px',
+            borderRadius: '50%',
+            background: `linear-gradient(135deg, #fff, ${themeColor}30)`,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginBottom: '2rem',
+            border: `4px solid #fff`,
+            boxShadow: '0 10px 30px rgba(0,0,0,0.2)'
+          }}>
+            <Rocket size={48} color="#fff" />
+          </div>
+          <h2 style={{
+            fontSize: '2.5rem',
+            fontWeight: 800,
+            color: '#fff',
+            marginBottom: '1rem'
+          }}>
+            {currentSlide.title}
+          </h2>
+          <p style={{
+            fontSize: '1.25rem',
+            color: '#fff',
+            opacity: 0.9,
+            lineHeight: 1.6,
+            whiteSpace: 'pre-line'
+          }}>
+            {currentSlide.content}
+          </p>
+          <button style={{
+            marginTop: '2rem',
+            padding: '1rem 2rem',
+            background: '#fff',
+            color: themeColor,
+            border: 'none',
+            borderRadius: '8px',
+            fontSize: '1.1rem',
+            fontWeight: 700,
+            cursor: 'pointer'
+          }}>
+            Get Started
+          </button>
+        </div>
+      )
+    }
+    
+    // Default content layout
+    return (
+      <div style={{ padding: '1rem 0' }}>
+        <h2 style={{
+          fontSize: '1.75rem',
+          fontWeight: 700,
+          color: currentSlide.textColor,
+          marginBottom: '1rem',
+          paddingBottom: '0.75rem',
+          borderBottom: `3px solid ${themeColor}`,
+          display: 'inline-block'
+        }}>
+          {currentSlide.title}
+        </h2>
+        <div style={{ lineHeight: 1.8 }}>
+          {currentSlide.content.split('\n').map((line, i) => (
+            <p key={i} style={{
+              color: currentSlide.textColor,
+              marginBottom: '0.75rem',
+              fontSize: '1.05rem',
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: '0.75rem'
+            }}>
+              {line.startsWith('•') && (
+                <span style={{
+                  color: themeColor,
+                  fontWeight: 700,
+                  fontSize: '1.2rem'
+                }}>•</span>
+              )}
+              {line.replace('• ', '')}
+            </p>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="preview-modal-overlay" onClick={onClose}>
       <div className="preview-container" onClick={e => e.stopPropagation()}>
@@ -315,7 +643,9 @@ function TemplatePreviewModal({ template, onClose, onUse }) {
                   overflow: 'hidden',
                   boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
                   display: 'flex',
-                  flexDirection: 'column'
+                  flexDirection: 'column',
+                  width: '800px',
+                  height: '450px'
                 }}
               >
                 {/* Slide Header */}
@@ -352,7 +682,7 @@ function TemplatePreviewModal({ template, onClose, onUse }) {
                   </span>
                 </div>
                 
-                {/* Slide Content */}
+                {/* Slide Content with Design */}
                 <div 
                   className="preview-slide-body" 
                   style={{ 
@@ -363,34 +693,7 @@ function TemplatePreviewModal({ template, onClose, onUse }) {
                     overflowY: 'auto'
                   }}
                 >
-                  <h2 
-                    className="preview-slide-heading"
-                    style={{ 
-                      color: currentSlide.textColor,
-                      borderBottom: `2px solid ${themeColor}`,
-                      paddingBottom: '0.75rem',
-                      marginBottom: '1rem',
-                      fontSize: '1.5rem',
-                      fontWeight: 700
-                    }}
-                  >
-                    {currentSlide.title}
-                  </h2>
-                  <div className="preview-slide-content-text" style={{ lineHeight: 1.7 }}>
-                    {currentSlide.content.split('\n').map((line, i) => (
-                      <p 
-                        key={i} 
-                        className="preview-slide-line"
-                        style={{ 
-                          color: currentSlide.textColor,
-                          marginBottom: '0.5rem',
-                          fontSize: '0.95rem'
-                        }}
-                      >
-                        {line}
-                      </p>
-                    ))}
-                  </div>
+                  {renderSlideContent()}
                 </div>
               </div>
             </div>
