@@ -744,6 +744,92 @@
   border-color: var(--bee-primary);
 }
 
+/* Download Section */
+.landing-download {
+  padding: 6rem 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.landing-download-content {
+  display: flex;
+  justify-content: center;
+}
+
+.landing-download-card {
+  text-align: center;
+  background: var(--bg-secondary);
+  border: 1px solid rgba(212, 165, 116, 0.15);
+  border-radius: 20px;
+  padding: 3rem 4rem;
+  max-width: 480px;
+  width: 100%;
+  transition: transform 0.3s, border-color 0.3s, box-shadow 0.3s;
+}
+
+.landing-download-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(212, 165, 116, 0.3);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3), 0 0 40px rgba(212, 165, 116, 0.05);
+}
+
+.landing-download-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(212, 165, 116, 0.15) 0%, rgba(212, 165, 116, 0.05) 100%);
+  color: var(--bee-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.5rem;
+}
+
+.landing-download-card h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+}
+
+.landing-download-card p {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  margin-bottom: 2rem;
+}
+
+.landing-download-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 2rem;
+  background: linear-gradient(135deg, var(--bee-primary) 0%, var(--bee-primary-dark) 100%);
+  color: var(--bg-primary);
+  text-decoration: none;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: transform 0.2s, box-shadow 0.2s;
+  margin-bottom: 1rem;
+}
+
+.landing-download-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 30px rgba(212, 165, 116, 0.35);
+}
+
+.landing-download-meta {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--text-tertiary);
+}
+
+@media (max-width: 768px) {
+  .landing-download-card {
+    padding: 2rem 1.5rem;
+  }
+}
+
 /* CTA Section */
 .landing-cta {
   position: relative;

@@ -9,6 +9,8 @@ import {
   FileText,
   Wand2,
   Download,
+  Monitor,
+  Apple,
   Edit3,
   ChevronRight,
   Star,
@@ -31,6 +33,7 @@ function LandingPage() {
             <a href="#features">Features</a>
             <a href="#how-it-works">How it Works</a>
             <a href="#templates">Templates</a>
+            <a href="#download">Download</a>
           </div>
           <div className="landing-nav-actions">
             <Link to="/ai-generate" className="landing-btn-primary">
@@ -302,6 +305,37 @@ function LandingPage() {
         </div>
       </section>
 
+      {/* Download Section */}
+      <section id="download" className="landing-download">
+        <div className="landing-section-header">
+          <span className="landing-section-badge">Desktop App</span>
+          <h2 className="landing-section-title">
+            Take it offline.<br />
+            <span className="gradient-text">Download the desktop app.</span>
+          </h2>
+        </div>
+        <div className="landing-download-content">
+          <div className="landing-download-card">
+            <div className="landing-download-icon">
+              <Monitor size={48} />
+            </div>
+            <h3>PPT SaaS for macOS</h3>
+            <p>Native desktop experience with splash screen, keyboard shortcuts, and file system integration.</p>
+            <a
+              href="https://github.com/shibinsp/pptxfactory/releases/latest"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="landing-download-btn"
+            >
+              <Apple size={20} />
+              Download for Mac
+              <Download size={18} />
+            </a>
+            <span className="landing-download-meta">macOS (Apple Silicon) &middot; v2.0.0 &middot; 94 MB</span>
+          </div>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="landing-cta">
         <div className="landing-cta-bg">
@@ -340,6 +374,11 @@ function LandingPage() {
               <a href="#features">Features</a>
               <a href="#how-it-works">How it Works</a>
               <a href="#templates">Templates</a>
+            </div>
+            <div className="landing-footer-column">
+              <h4>Download</h4>
+              <a href="https://github.com/shibinsp/pptxfactory/releases/latest" target="_blank" rel="noopener noreferrer">macOS Desktop App</a>
+              <a href="https://github.com/shibinsp/pptxfactory/releases" target="_blank" rel="noopener noreferrer">All Releases</a>
             </div>
           </div>
         </div>
